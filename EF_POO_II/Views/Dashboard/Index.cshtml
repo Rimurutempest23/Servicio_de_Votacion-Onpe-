@@ -1,0 +1,151 @@
+﻿
+
+
+@{
+    ViewData["Title"] = "Resultados ONPE";
+}
+
+<style>
+    body {
+        background: #f5f7fa;
+    }
+
+    .header-onpe {
+        background: linear-gradient(90deg, #002f6c, #0056b3);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .card-candidato {
+        border-left: 6px solid #0056b3;
+        border-radius: 10px;
+        background: white;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .progress {
+        height: 20px;
+    }
+
+    .progress-bar {
+        font-weight: bold;
+    }
+
+    .total-box {
+        background: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+    }
+</style>
+
+<div class="container mt-4">
+
+    <!-- HEADER -->
+    <div class="header-onpe text-center mb-4">
+        <h2>🗳 RESULTADOS OFICIALES</h2>
+        <p>Oficina Nacional de Procesos Electorales</p>
+    </div>
+
+    <!-- BOTÓN PDF -->
+    <div class="text-end mb-3">
+        <a href="/Dashboard/ExportarPDF" class="btn btn-danger">
+            📄 Exportar Reporte
+        </a>
+    </div>
+
+    <!-- TOTAL -->
+    <div class="total-box mb-4">
+        <h4 id="totalVotos"></h4>
+        <small>Avance del conteo</small>
+    </div>
+
+    <!-- GRÁFICO -->
+    <div class="card p-3 shadow mb-4">
+        <canvas id="graficoVotos"></canvas>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div id="resultados"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    let chart;
+
+    async function cargarDatos() {
+    const response = await fetch('/Dashboard/ObtenerResultados');
+    const data = await response.json();
+
+    const labels = data.map(x => x.candidato);
+    const votos = data.map(x => x.votos);
+
+    const total = votos.reduce((a, b) => a + b, 0);
+
+    document.getElementById("totalVotos").innerText =
+    "Total de votos contabilizados: " + total;
+
+    let html = "";
+
+    data.forEach(x => {
+    let porcentaje = total > 0 ? ((x.votos / total) * 100).toFixed(2) : 0;
+
+    html += `
+    <div class="card-candidato">
+    <h5>${x.candidato}</h5>
+    <div class="d-flex justify-content-between">
+    <span>${x.votos} votos</span>
+    <strong>${porcentaje}%</strong>
+    </div>
+    <div class="progress mt-2">
+    <div class="progress-bar bg-primary" style="width:${porcentaje}%">
+    ${porcentaje}%
+    </div>
+    </div>
+    </div>
+    `;
+    });
+
+    document.getElementById("resultados").innerHTML = html;
+
+    // 🔥 GRÁFICO DE BARRAS
+    if (chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = votos;
+    chart.update();
+    } else {
+    const ctx = document.getElementById('graficoVotos').getContext('2d');
+
+    chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+    labels: labels,
+    datasets: [{
+    label: 'Votos',
+    data: votos
+    }]
+    },
+    options: {
+    responsive: true,
+    scales: {
+    y: {
+    beginAtZero: true
+    }
+    }
+    }
+    });
+    }
+    }
+
+    // Actualiza cada 5 segundos
+    setInterval(cargarDatos, 5000);
+
+    // Primera carga
+    cargarDatos();
+</script>

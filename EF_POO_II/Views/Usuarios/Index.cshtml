@@ -1,0 +1,23 @@
+﻿@model List<EF_POO_II.Models.Usuario>
+
+<h2>Usuarios</h2>
+
+<a asp-action="Create" class="btn btn-success mb-3">Nuevo Usuario</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Usuario</th>
+            <th>Rol</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Username</td>
+                <td>@u.Rol.Nombre</td>
+            </tr>
+        }
+    </tbody>
+</table>

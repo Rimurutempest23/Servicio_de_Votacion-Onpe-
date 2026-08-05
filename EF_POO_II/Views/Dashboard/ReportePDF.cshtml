@@ -1,0 +1,26 @@
+﻿@model List<ReporteViewModel>
+
+<h2 style="text-align:center;">REPORTE OFICIAL</h2>
+<p>Fecha: @DateTime.Now</p>
+
+<table border="1" width="100%" cellpadding="5">
+    <thead>
+        <tr>
+            <th>Candidato</th>
+            <th>Votos</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Nombre</td>
+                <td>@item.Votos</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h3>
+    Total: @Model.Sum(x => x.Votos)
+</h3>

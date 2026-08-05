@@ -1,0 +1,109 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Sistema de Votación</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container-fluid">
+
+                <a class="navbar-brand" asp-controller="Dashboard" asp-action="Index">
+                    🗳 Sistema Votación
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbar">
+
+                    <!-- IZQUIERDA -->
+                    <ul class="navbar-nav me-auto">
+
+                        <!-- Dashboard público -->
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
+                                📊 Dashboard
+                            </a>
+                        </li>
+
+                        <!-- Solo operadores/admin -->
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Votos" asp-action="Index">
+                                    🗳 Registrar Votos
+                                </a>
+                            </li>
+                        }
+
+                        <!-- Solo admin -->
+                        @if (User.IsInRole("Administrador"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Usuarios" asp-action="Index">
+                                    👥 Usuarios
+                                </a>
+                            </li>
+                        }
+
+                    </ul>
+
+                    <!-- DERECHA -->
+                    <ul class="navbar-nav">
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link text-white">
+                                    👤 @User.Identity.Name
+                                </span>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link text-warning" asp-controller="Account" asp-action="Logout">
+                                    🚪 Logout
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-success" asp-controller="Account" asp-action="Login">
+                                    🔐 Login
+                                </a>
+                            </li>
+                        }
+
+                    </ul>
+
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container mt-4">
+        @RenderBody()
+    </div>
+
+    <footer class="border-top footer text-center text-muted mt-5">
+        <div class="container">
+            &copy; 2026 - Sistema de Votación | Proyecto ASP.NET Core
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @RenderSection("Scripts", required: false)
+
+</body>
+</html>
