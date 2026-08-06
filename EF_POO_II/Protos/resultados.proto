@@ -24,3 +24,5 @@ message CandidatoGrpc {
   int32 votos = 4;
   double porcentaje = 5;
 }
+
+

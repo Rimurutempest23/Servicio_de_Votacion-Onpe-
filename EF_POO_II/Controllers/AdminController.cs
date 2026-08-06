@@ -9,6 +9,6 @@ public class AdminController : Controller
     [HttpGet("[action]")]
     public IActionResult Index()
     {
-        return View();
+        return RedirectToAction("Index", "Dashboard");
     }
 }

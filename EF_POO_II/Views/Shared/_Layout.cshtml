@@ -156,7 +156,13 @@
             });
 
             document.querySelectorAll('form').forEach(function (form) {
-                form.addEventListener('submit', showLoader);
+                form.addEventListener('submit', function () {
+                    const noLoader = form.dataset.noLoader === 'true' || form.classList.contains('no-loader');
+                    if (noLoader) {
+                        return;
+                    }
+                    showLoader();
+                });
             });
         });
     </script>

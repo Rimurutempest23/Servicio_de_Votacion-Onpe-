@@ -109,9 +109,12 @@ public class CandidatoRepository : ICandidatoRepository
         // Call stored procedure sp_UpdateCandidato
         await _context.Database.ExecuteSqlRawAsync(
             "EXEC sp_UpdateCandidato @Id = {0}, @Nombre = {1}, @ImagenUrl = {2}",
-            candidato.Id,
-            candidato.Nombre,
-            (object?)candidato.ImagenUrl ?? DBNull.Value);
+            new SqlParameter("@Id", candidato.Id),
+            new SqlParameter("@Nombre", candidato.Nombre),
+            new SqlParameter("@ImagenUrl", SqlDbType.NVarChar, 500)
+            {
+                Value = (object?)candidato.ImagenUrl ?? DBNull.Value
+            });
     }
 
     public async Task DeleteAsync(int id)
