@@ -23,6 +23,8 @@ public partial class SistemaVotacionContext : DbContext
 
     public virtual DbSet<Voto> Votos { get; set; }
 
+    public virtual DbSet<ReporteExportado> ReportesExportados { get; set; }
+
     
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -33,6 +35,10 @@ public partial class SistemaVotacionContext : DbContext
 
             entity.Property(e => e.Nombre)
                 .HasMaxLength(100)
+                .IsUnicode(false);
+
+            entity.Property(e => e.ImagenUrl)
+                .HasMaxLength(300)
                 .IsUnicode(false);
         });
 
@@ -76,6 +82,23 @@ public partial class SistemaVotacionContext : DbContext
                 .HasForeignKey(d => d.CandidatoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Votos__Candidato__534D60F1");
+        });
+
+        modelBuilder.Entity<ReporteExportado>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_ReportesExportados");
+
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(150)
+                .IsUnicode(false);
+
+            entity.Property(e => e.FechaCreacion)
+                .HasDefaultValueSql("GETDATE()")
+                .HasColumnType("datetime");
+
+            entity.Property(e => e.RutaGuardado)
+                .HasMaxLength(300)
+                .IsUnicode(false);
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -1,0 +1,38 @@
+@model EF_POO_II.Models.Candidato
+
+@{
+    ViewData["Title"] = "Eliminar Candidato";
+}
+
+<h2>Eliminar Candidato</h2>
+
+<div class="alert alert-warning">
+    Seguro que desea eliminar este candidato?
+</div>
+
+<dl class="row">
+    <dt class="col-sm-2">Id</dt>
+    <dd class="col-sm-10">@Model.Id</dd>
+
+    <dt class="col-sm-2">Nombre</dt>
+    <dd class="col-sm-10">@Model.Nombre</dd>
+
+    <dt class="col-sm-2">Imagen</dt>
+    <dd class="col-sm-10">
+        @if (!string.IsNullOrWhiteSpace(Model.ImagenUrl))
+        {
+            <img src="@Model.ImagenUrl" alt="@Model.Nombre" class="rounded border" style="width: 72px; height: 72px; object-fit: cover;" />
+        }
+        else
+        {
+            <span class="text-muted">Sin imagen</span>
+        }
+    </dd>
+</dl>
+
+<form asp-controller="Candidatos" asp-action="DeleteConfirmed" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-controller="Candidatos" asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

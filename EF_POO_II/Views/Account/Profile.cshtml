@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Perfil";
+    var expiresAtClaim = User.FindFirst("SessionExpiresAt")?.Value;
+    var expiresAt = DateTime.TryParse(expiresAtClaim, out var parsed) ? parsed.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss") : "No disponible";
+}
+
+<h2>Perfil de Usuario</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Usuario</dt>
+            <dd class="col-sm-9">@User.Identity?.Name</dd>
+
+            <dt class="col-sm-3">Rol</dt>
+            <dd class="col-sm-9">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</dd>
+
+            <dt class="col-sm-3">Expira sesion</dt>
+            <dd class="col-sm-9">@expiresAt</dd>
+        </dl>
+    </div>
+</div>

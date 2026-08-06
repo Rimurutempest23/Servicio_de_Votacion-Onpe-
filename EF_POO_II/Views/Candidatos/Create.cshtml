@@ -1,0 +1,33 @@
+@model EF_POO_II.Models.Candidato
+
+@{
+    ViewData["Title"] = "Crear Candidato";
+}
+
+<h2>Crear Candidato</h2>
+
+<form asp-controller="Candidatos" asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ImagenUrl" class="form-label">URL de imagen o logo</label>
+        <input asp-for="ImagenUrl" class="form-control" placeholder="/img/lista-a.png o https://..." />
+        <span asp-validation-for="ImagenUrl" class="text-danger"></span>
+        <small class="text-muted">Este campo representa la foto, simbolo o logo que vera el elector.</small>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-controller="Candidatos" asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

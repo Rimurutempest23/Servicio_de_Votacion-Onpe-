@@ -1,43 +1,46 @@
-﻿@model IEnumerable<dynamic>
+@model IEnumerable<EF_POO_II.Models.CandidatoResultadoDto>
 
 @{
     ViewData["Title"] = "Registro de Votos";
+    var totalVotos = ViewBag.TotalVotosGeneral is int totalGeneral ? totalGeneral : Model.Sum(c => c.Total);
+    var candidatosSelect = ViewBag.Candidatos as IEnumerable<EF_POO_II.Models.CandidatoResultadoDto> ?? Model;
 }
 
-<div class="container mt-4">
-    <div class="d-flex align-items-center mb-4">
-        <h2 class="mb-0">🗳️ Registro de Votos</h2>
+<div>
+    <div class="page-heading">
+        <div>
+            <span class="eyebrow">Mesa de conteo</span>
+            <h2>Registro de Votos</h2>
+            <p class="text-muted mb-0">Total contabilizado: @totalVotos votos | Registros encontrados: @ViewBag.TotalRegistros</p>
+        </div>
     </div>
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <form asp-controller="Votos" asp-action="Index" method="get" class="filter-bar">
+        <div class="filter-field">
+            <label class="form-label">Filtrar por candidato</label>
+            <input name="filtro" value="@ViewBag.Filtro" class="form-control" placeholder="Ej: Lista A..." />
         </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="filter-actions">
+            <button class="btn btn-primary">Buscar</button>
+            <a asp-controller="Votos" asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
         </div>
-    }
+    </form>
 
-    <div class="row">
+    <div class="row g-4">
         <div class="col-md-5">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">Registrar Nuevo Voto</h5>
+                    <h5 class="card-title mb-0">Registrar acta de votos</h5>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Registrar" method="post">
+                    <form asp-controller="Votos" asp-action="Registrar" method="post">
+                        @Html.AntiForgeryToken()
+
                         <div class="mb-3">
-                            <label class="form-label font-weight-bold">Candidato:</label>
+                            <label class="form-label fw-bold">Candidato:</label>
                             <select name="candidatoId" class="form-select" required>
                                 <option value="" disabled selected>Seleccione un candidato...</option>
-                                @foreach (var c in Model)
+                                @foreach (var c in candidatosSelect)
                                 {
                                     <option value="@c.Id">@c.Nombre</option>
                                 }
@@ -45,12 +48,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label font-weight-bold">Cantidad:</label>
-                            <input type="number" name="cantidad" class="form-control" min="1" placeholder="Ej: 5" required />
+                            <label class="form-label fw-bold">Cantidad:</label>
+                            <input type="number" name="cantidad" class="form-control" min="1" placeholder="Ej: 120" required />
                         </div>
 
                         <button type="submit" class="btn btn-success w-100">
-                            <i class="bi bi-plus-circle"></i> Registrar Votos
+                            Registrar Votos
                         </button>
                     </form>
                 </div>
@@ -60,30 +63,59 @@
         <div class="col-md-7">
             <div class="card shadow-sm">
                 <div class="card-header bg-dark text-white">
-                    <h5 class="card-title mb-0">📊 Resultados Actuales</h5>
+                    <h5 class="card-title mb-0">Resultados por candidato</h5>
                 </div>
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
+                                <th>Imagen</th>
                                 <th>Candidato</th>
-                                <th class="text-center">Total de votos</th>
+                                <th class="text-center">Votos</th>
+                                <th class="text-center">Porcentaje</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var c in Model)
                             {
+                                var porcentaje = totalVotos > 0 ? (c.Total * 100.0 / totalVotos) : 0;
                                 <tr>
-                                    <td class="align-middle">@c.Nombre</td>
-                                    <td class="text-center align-middle">
+                                    <td style="width: 76px;">
+                                        @if (!string.IsNullOrWhiteSpace(c.ImagenUrl))
+                                        {
+                                            <img src="@c.ImagenUrl" alt="@c.Nombre" class="rounded border" style="width: 48px; height: 48px; object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded border bg-light d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                                <span class="text-muted">N/A</span>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>@c.Nombre</td>
+                                    <td class="text-center">
                                         <span class="badge bg-info text-dark fs-6">@c.Total</span>
                                     </td>
+                                    <td class="text-center">@porcentaje.ToString("0.00")%</td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
             </div>
+            @if (ViewBag.TotalPages > 1)
+            {
+                <nav aria-label="Paginacion de resultados" class="mt-3">
+                    <ul class="pagination justify-content-end">
+                        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == ViewBag.Page ? "active" : "")">
+                                <a class="page-link" asp-controller="Votos" asp-action="Index" asp-route-page="@i" asp-route-filtro="@ViewBag.Filtro">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
         </div>
     </div>
 </div>

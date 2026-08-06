@@ -1,56 +1,78 @@
-﻿using EF_POO_II.Models;
+using EF_POO_II.Data.Repositories;
+using EF_POO_II.Data.Services;
+using EF_POO_II.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Rotativa.AspNetCore;
 
+namespace EF_POO_II.Controllers;
 
-namespace EF_POO_II.Controllers
+[Route("[controller]")]
+public class DashboardController : Controller
 {
-    public class DashboardController : Controller
+    private readonly IVotacionService _votacionService;
+    private readonly IReporteExportadoRepository _reporteExportadoRepository;
+
+    public DashboardController(
+        IVotacionService votacionService,
+        IReporteExportadoRepository reporteExportadoRepository)
     {
-        private readonly SistemaVotacionContext _context;
+        _votacionService = votacionService;
+        _reporteExportadoRepository = reporteExportadoRepository;
+    }
 
-        public DashboardController(SistemaVotacionContext context)
+    [HttpGet("/")]
+    [HttpGet("[action]")]
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    [HttpGet("[action]")]
+    public async Task<IActionResult> ObtenerResultados(string? filtro, int page = 1)
+    {
+        const int pageSize = 5;
+        var data = await _votacionService.ListarResultadosPaginadosAsync(filtro, page, pageSize);
+        var totalGeneral = (await _votacionService.ListarResultadosAsync()).Sum(c => c.Total);
+
+        return Json(new
         {
-            _context = context;
-        }
-
-        
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        
-        public IActionResult ObtenerResultados()
-        {
-            var data = _context.Candidatos
-                .Select(c => new
-                {
-                    candidato = c.Nombre,
-                    votos = c.TotalVotos
-                })
-                .ToList();
-
-            return Json(data);
-        }
-
-
-
-        public IActionResult ExportarPDF()
-        {
-            var data = _context.Candidatos
-                .Select(c => new ReporteViewModel
-                {
-                    Nombre = c.Nombre,
-                    Votos = c.TotalVotos
-                })
-                .ToList();
-
-            return new ViewAsPdf("ReportePDF", data)
+            totalVotos = totalGeneral,
+            totalRegistros = data.TotalRegistros,
+            page = data.Page,
+            totalPages = data.TotalPages,
+            items = data.Items.Select(c => new
             {
-                FileName = "ReporteVotacion.pdf"
-            };
-        }
+                candidato = c.Nombre,
+                imagenUrl = c.ImagenUrl,
+                votos = c.Total
+            })
+        });
+    }
+
+    [HttpGet("[action]")]
+    public async Task<IActionResult> ExportarPDF()
+    {
+        var data = await _votacionService.ListarResultadosAsync();
+        var fileName = $"ReporteVotacion_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+        var rutaBase = Url.Action("ExportarPDF", "Dashboard", null, Request.Scheme) ?? "/Dashboard/ExportarPDF";
+        var rutaDescarga = $"{rutaBase}?archivo={Uri.EscapeDataString(fileName)}";
+
+        var reporte = data.Select(c => new ReporteViewModel
+        {
+            Nombre = c.Nombre,
+            ImagenUrl = c.ImagenUrl,
+            Votos = c.Total
+        }).ToList();
+
+        await _reporteExportadoRepository.RegistrarAsync(new ReporteExportado
+        {
+            Nombre = fileName,
+            RutaGuardado = rutaDescarga
+        });
+
+        return new ViewAsPdf("ReportePDF", reporte)
+        {
+            FileName = fileName
+        };
     }
 }

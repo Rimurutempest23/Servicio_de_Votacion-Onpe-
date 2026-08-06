@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option csharp_namespace = "EF_POO_II.Grpc";
+
+package resultados;
+
+service ResultadosGrpc {
+  rpc ObtenerResultados (ResultadosRequest) returns (ResultadosReply);
+}
+
+message ResultadosRequest {
+}
+
+message ResultadosReply {
+  int32 total_votos = 1;
+  string fecha_consulta = 2;
+  repeated CandidatoGrpc candidatos = 3;
+}
+
+message CandidatoGrpc {
+  int32 id = 1;
+  string nombre = 2;
+  string imagen_url = 3;
+  int32 votos = 4;
+  double porcentaje = 5;
+}

@@ -1,126 +1,134 @@
-﻿using EF_POO_II.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+using EF_POO_II.Helpers;
+using EF_POO_II.Models;
+using EF_POO_II.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
-namespace EF_POO_II.Controllers
+namespace EF_POO_II.Controllers;
+
+[Route("[controller]")]
+[Authorize(Roles = "Administrador")]
+public class UsuariosController : Controller
 {
-    // 🔐 Solo Admin puede acceder
-    [Authorize(Roles = "Administrador")]
-    public class UsuariosController : Controller
+    private readonly IUsuarioRepository _repo;
+    private readonly SistemaVotacionContext _context;
+
+    public UsuariosController(IUsuarioRepository repo, SistemaVotacionContext context)
     {
-        private readonly SistemaVotacionContext _context;
+        _repo = repo;
+        _context = context;
+    }
 
-        public UsuariosController(SistemaVotacionContext context)
+    [HttpGet("")]
+    [HttpGet("[action]")]
+    public async Task<IActionResult> Index(string? filtro, int page = 1)
+    {
+        const int pageSize = 5;
+        var resultado = await _repo.BuscarPaginadoAsync(filtro, page, pageSize);
+
+        ViewBag.Page = resultado.Page;
+        ViewBag.TotalPages = resultado.TotalPages;
+        ViewBag.TotalRegistros = resultado.TotalRegistros;
+        ViewBag.Filtro = filtro;
+
+        return View(resultado.Items);
+    }
+
+    [HttpGet("[action]")]
+    public async Task<IActionResult> Create()
+    {
+        ViewBag.Roles = await _context.Roles.OrderBy(r => r.Nombre).ToListAsync();
+        return View();
+    }
+
+    [HttpPost("[action]")]
+    [HttpPost("[action]/{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(string username, string password, int rolId)
+    {
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            _context = context;
-        }
-
-        // 🔐 HASH
-        private string HashPassword(string password)
-        {
-            using (var sha = SHA256.Create())
-            {
-                var bytes = Encoding.UTF8.GetBytes(password);
-                var hash = sha.ComputeHash(bytes);
-                return Convert.ToBase64String(hash);
-            }
-        }
-        [AllowAnonymous]
-        public IActionResult Login()
-        {
-            return View();
-        }
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login(string username, string password)
-        {
-            var usuario = await _context.Usuarios
-                .Include(u => u.Rol)
-                .FirstOrDefaultAsync(u => u.Username == username);
-
-            if (usuario == null)
-            {
-                ViewBag.Error = "Usuario no existe";
-                return View();
-            }
-
-            // 🔐 COMPARAR PASSWORD CON HASH
-            var passwordValida = Convert.ToBase64String(
-                SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(password))
-            ) == usuario.PasswordHash;
-
-            if (!passwordValida)
-            {
-                ViewBag.Error = "Contraseña incorrecta";
-                return View();
-            }
-
-            // ✅ LOGIN EXITOSO (sesión simple)
-            HttpContext.Session.SetString("User", usuario.Username);
-            HttpContext.Session.SetString("Role", usuario.Rol.Nombre);
-
-            return RedirectToAction("Index", "Home");
-        }
-        // =========================
-        // LISTA DE USUARIOS
-        // =========================
-        public async Task<IActionResult> Index()
-        {
-            var usuarios = await _context.Usuarios
-                .Include(u => u.Rol)
-                .ToListAsync();
-
-            return View(usuarios);
-        }
-
-        // =========================
-        // GET: CREAR USUARIO
-        // =========================
-        public IActionResult Create()
-        {
-            ViewBag.Roles = _context.Roles.ToList();
+            ViewBag.Error = "Todos los campos son obligatorios";
+            ViewBag.Roles = await _context.Roles.OrderBy(r => r.Nombre).ToListAsync();
             return View();
         }
 
-        // =========================
-        // POST: CREAR USUARIO
-        // =========================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(string username, string password, int rolId)
+        var existe = await _repo.GetByUsernameAsync(username);
+        if (existe != null)
         {
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-            {
-                ViewBag.Error = "Todos los campos son obligatorios";
-                ViewBag.Roles = _context.Roles.ToList();
-                return View();
-            }
-
-            // Verificar si ya existe
-            var existe = await _context.Usuarios.AnyAsync(u => u.Username == username);
-            if (existe)
-            {
-                ViewBag.Error = "El usuario ya existe";
-                ViewBag.Roles = _context.Roles.ToList();
-                return View();
-            }
-
-            var nuevoUsuario = new Usuario
-            {
-                Username = username,
-                PasswordHash = HashPassword(password), // 🔥 HASH
-                RolId = rolId
-            };
-
-            _context.Usuarios.Add(nuevoUsuario);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Usuario creado correctamente";
-
-            return RedirectToAction(nameof(Index));
+            ViewBag.Error = "El usuario ya existe";
+            ViewBag.Roles = await _context.Roles.OrderBy(r => r.Nombre).ToListAsync();
+            return View();
         }
+
+        var nuevoUsuario = new Usuario
+        {
+            Username = username,
+            PasswordHash = PasswordHelper.HashPassword(password),
+            RolId = rolId
+        };
+
+        await _repo.AddAsync(nuevoUsuario);
+
+        TempData["Success"] = "Usuario creado correctamente";
+        TempData["Scope"] = "Usuarios";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet("[action]/{id}")]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var usuario = await _repo.GetByIdAsync(id);
+        if (usuario == null) return NotFound();
+        ViewBag.Roles = await _context.Roles.OrderBy(r => r.Nombre).ToListAsync();
+        return View(usuario);
+    }
+
+    [HttpPost("[action]")]
+    [HttpPost("[action]/{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, string username, string? password, int rolId)
+    {
+        var usuario = await _repo.GetByIdAsync(id);
+        if (usuario == null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            ViewBag.Error = "El nombre de usuario es obligatorio";
+            ViewBag.Roles = await _context.Roles.OrderBy(r => r.Nombre).ToListAsync();
+            return View(usuario);
+        }
+
+        usuario.Username = username;
+        usuario.RolId = rolId;
+        if (!string.IsNullOrWhiteSpace(password))
+        {
+            usuario.PasswordHash = PasswordHelper.HashPassword(password);
+        }
+
+        await _repo.UpdateAsync(usuario);
+        TempData["Success"] = "Usuario actualizado";
+        TempData["Scope"] = "Usuarios";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet("[action]/{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var usuario = await _repo.GetByIdAsync(id);
+        if (usuario == null) return NotFound();
+        return View(usuario);
+    }
+
+    [HttpPost("[action]")]
+    [HttpPost("[action]/{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        await _repo.DeleteAsync(id);
+        TempData["Success"] = "Usuario eliminado";
+        TempData["Scope"] = "Usuarios";
+        return RedirectToAction(nameof(Index));
     }
 }

@@ -2,7 +2,8 @@
 {
     public class ReporteViewModel
     {
-        public string Nombre { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string? ImagenUrl { get; set; }
         public int Votos { get; set; }
     }
 }

@@ -1,22 +1,43 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Sistema de Votación</title>
+    <title>@ViewData["Title"] - Sistema de Votacion</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-
 <body>
+    @{
+        var currentController = Context.Request.RouteValues["controller"]?.ToString();
+        var messageScope = TempData["Scope"] as string;
+        var isAuth = User.Identity?.IsAuthenticated == true;
+    }
 
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container-fluid">
+    <div id="appLoader" class="app-loader">
+        <div class="loader-backdrop"></div>
+        <div class="loader-card">
+            <div class="loader-logo">
+                <span>SV</span>
+            </div>
+            <h1>SV Sistema Votacion</h1>
+            <p>Preparando conteo electoral...</p>
+            <div class="loader-progress">
+                <span></span>
+            </div>
+        </div>
+    </div>
 
-                <a class="navbar-brand" asp-controller="Dashboard" asp-action="Index">
-                    🗳 Sistema Votación
+    <header class="app-header">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand brand-lockup" asp-controller="Dashboard" asp-action="Index">
+                    <span class="brand-mark">SV</span>
+                    <span>
+                        <strong>Sistema Votacion</strong>
+                        <small>Conteo electoral</small>
+                    </span>
                 </a>
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
@@ -24,86 +45,121 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="navbar">
-
-                    <!-- IZQUIERDA -->
                     <ul class="navbar-nav me-auto">
-
-                        <!-- Dashboard público -->
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
-                                📊 Dashboard
-                            </a>
+                            <a class="nav-link @(currentController == "Dashboard" ? "active" : "")" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
                         </li>
 
-                        <!-- Solo operadores/admin -->
-                        @if (User.Identity.IsAuthenticated)
+                        @if (isAuth)
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Votos" asp-action="Index">
-                                    🗳 Registrar Votos
-                                </a>
+                                <a class="nav-link @(currentController == "Votos" ? "active" : "")" asp-controller="Votos" asp-action="Index">Registrar Votos</a>
                             </li>
                         }
 
-                        <!-- Solo admin -->
                         @if (User.IsInRole("Administrador"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Usuarios" asp-action="Index">
-                                    👥 Usuarios
-                                </a>
+                                <a class="nav-link @(currentController == "Candidatos" ? "active" : "")" asp-controller="Candidatos" asp-action="Index">Candidatos</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @(currentController == "Usuarios" ? "active" : "")" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
                             </li>
                         }
-
                     </ul>
 
-                    <!-- DERECHA -->
-                    <ul class="navbar-nav">
-
-                        @if (User.Identity.IsAuthenticated)
+                    <ul class="navbar-nav align-items-lg-center">
+                        @if (isAuth)
                         {
                             <li class="nav-item">
-                                <span class="nav-link text-white">
-                                    👤 @User.Identity.Name
-                                </span>
+                                <a class="nav-link user-chip" asp-controller="Account" asp-action="Profile">@User.Identity?.Name</a>
                             </li>
-
                             <li class="nav-item">
-                                <a class="nav-link text-warning" asp-controller="Account" asp-action="Logout">
-                                    🚪 Logout
-                                </a>
+                                <a class="btn btn-sm btn-outline-warning ms-lg-2" asp-controller="Account" asp-action="Logout">Cerrar sesion</a>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-success" asp-controller="Account" asp-action="Login">
-                                    🔐 Login
-                                </a>
+                                <a class="btn btn-sm btn-light" asp-controller="Account" asp-action="Login">Iniciar sesion</a>
                             </li>
                         }
-
                     </ul>
-
                 </div>
             </div>
         </nav>
     </header>
 
-    <div class="container mt-4">
-        @RenderBody()
-    </div>
+    <main class="app-main">
+        <div class="container-fluid app-container">
+            @if (TempData["Success"] != null && (messageScope == null || messageScope == currentController))
+            {
+                <div class="app-alert app-alert-success" role="alert">
+                    <strong>Operacion exitosa.</strong>
+                    <span>@TempData["Success"]</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
 
-    <footer class="border-top footer text-center text-muted mt-5">
-        <div class="container">
-            &copy; 2026 - Sistema de Votación | Proyecto ASP.NET Core
+            @if (TempData["Error"] != null && (messageScope == null || messageScope == currentController))
+            {
+                <div class="app-alert app-alert-error" role="alert">
+                    <strong>No se pudo completar.</strong>
+                    <span>@TempData["Error"]</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="container-fluid px-4">
+            <span>&copy; 2026 - Sistema de Votacion</span>
+            <span>ASP.NET Core MVC | Web API | gRPC</span>
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const hideAppLoader = function () {
+            const loader = document.getElementById('appLoader');
+            if (loader) {
+                loader.classList.add('loader-hidden');
+            }
+        };
 
+        window.addEventListener('load', hideAppLoader);
+        window.addEventListener('pageshow', hideAppLoader);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const loader = document.getElementById('appLoader');
+            const showLoader = function () {
+                if (loader) {
+                    loader.classList.remove('loader-hidden');
+                }
+            };
+
+            document.querySelectorAll('a[href]').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    const href = link.getAttribute('href') || '';
+                    const target = link.getAttribute('target');
+                    const noLoader = link.dataset.noLoader === 'true' || link.classList.contains('no-loader');
+                    const isFileExport = href.toLowerCase().includes('exportarpdf');
+                    if (href.startsWith('#') || href.startsWith('javascript:') || target === '_blank' || noLoader || isFileExport) {
+                        return;
+                    }
+                    showLoader();
+                });
+            });
+
+            document.querySelectorAll('form').forEach(function (form) {
+                form.addEventListener('submit', showLoader);
+            });
+        });
+    </script>
     @RenderSection("Scripts", required: false)
-
 </body>
 </html>

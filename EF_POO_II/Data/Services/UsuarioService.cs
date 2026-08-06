@@ -1,8 +1,8 @@
 ﻿using EF_POO_II.Models;
-using EF_POO_II.Repositories;
+using EF_POO_II.Data.Repositories;
 using EF_POO_II.Helpers;
 
-namespace EF_POO_II.Services
+namespace EF_POO_II.Data.Services
 {
     public class UsuarioService
     {

@@ -1,81 +1,55 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using EF_POO_II.Data.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using EF_POO_II.Models;
+using Microsoft.AspNetCore.Mvc;
 
-namespace EF_POO_II.Controllers
+namespace EF_POO_II.Controllers;
+
+[Route("[controller]")]
+[Authorize(Roles = "Operador,Administrador")]
+public class VotosController : Controller
 {
-    // 🔐 Solo Operador y Administrador
-    [Authorize(Roles = "Operador,Administrador")]
-    public class VotosController : Controller
+    private readonly IVotacionService _votacionService;
+
+    public VotosController(IVotacionService votacionService)
     {
-        private readonly SistemaVotacionContext _context;
+        _votacionService = votacionService;
+    }
 
-        public VotosController(SistemaVotacionContext context)
+    [HttpGet("")]
+    [HttpGet("[action]")]
+    public async Task<IActionResult> Index(string? filtro, int page = 1)
+    {
+        const int pageSize = 5;
+        var data = await _votacionService.ListarResultadosAsync();
+        var resultado = await _votacionService.ListarResultadosPaginadosAsync(filtro, page, pageSize);
+
+        ViewBag.Candidatos = data.OrderBy(c => c.Nombre).ToList();
+        ViewBag.Page = resultado.Page;
+        ViewBag.TotalPages = resultado.TotalPages;
+        ViewBag.TotalRegistros = resultado.TotalRegistros;
+        ViewBag.Filtro = filtro;
+        ViewBag.TotalVotosGeneral = data.Sum(c => c.Total);
+
+        return View(resultado.Items);
+    }
+
+    [HttpPost("[action]")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Registrar(int candidatoId, int cantidad)
+    {
+        var mensaje = await _votacionService.RegistrarVotoAsync(candidatoId, cantidad);
+
+        if (mensaje.Contains("correctamente"))
         {
-            _context = context;
+            TempData["Success"] = mensaje;
+            TempData["Scope"] = "Votos";
+        }
+        else
+        {
+            TempData["Error"] = mensaje;
+            TempData["Scope"] = "Votos";
         }
 
-        // =========================
-        // GET: Votos
-        // =========================
-        public async Task<IActionResult> Index()
-        {
-            var data = await _context.Candidatos
-                .Select(c => new
-                {
-                    c.Id,
-                    c.Nombre,
-                    Total = _context.Votos
-                        .Where(v => v.CandidatoId == c.Id)
-                        .Sum(v => (int?)v.Cantidad) ?? 0
-                })
-                .ToListAsync();
-
-            return View(data);
-        }
-
-        // =========================
-        // POST: Votos/Registrar
-        // =========================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Registrar(int candidatoId, int cantidad)
-        {
-            // 🔴 Validación básica
-            if (cantidad <= 0)
-            {
-                TempData["Error"] = "La cantidad de votos debe ser mayor a cero.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            var candidato = await _context.Candidatos.FindAsync(candidatoId);
-
-            if (candidato == null)
-            {
-                TempData["Error"] = "Candidato no encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            // ✅ Registrar voto (auditoría)
-            var nuevoVoto = new Voto
-            {
-                CandidatoId = candidatoId,
-                Cantidad = cantidad,
-                Fecha = DateTime.Now
-            };
-
-            _context.Votos.Add(nuevoVoto);
-
-            // 💡 (OPCIONAL - PRO)
-            // Si agregas campo TotalVotos en Candidato:
-            candidato.TotalVotos += cantidad;
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = $"Se registraron {cantidad} votos correctamente.";
-
-            return RedirectToAction(nameof(Index));
-        }
+        return RedirectToAction(nameof(Index));
     }
 }

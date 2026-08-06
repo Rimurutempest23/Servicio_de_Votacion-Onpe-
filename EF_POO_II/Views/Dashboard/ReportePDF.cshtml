@@ -1,26 +1,376 @@
-﻿@model List<ReporteViewModel>
+@model List<ReporteViewModel>
+@using System.Globalization
 
-<h2 style="text-align:center;">REPORTE OFICIAL</h2>
-<p>Fecha: @DateTime.Now</p>
+@{
+    Layout = null;
+    var total = Model.Sum(x => x.Votos);
+    var colores = new[] { "#0056B3", "#D92D20", "#039855", "#F79009", "#7A5AF8", "#12B76A", "#344054", "#E31B54" };
+    var startAngle = 0.0;
+}
 
-<table border="1" width="100%" cellpadding="5">
-    <thead>
-        <tr>
-            <th>Candidato</th>
-            <th>Votos</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.Nombre</td>
-                <td>@item.Votos</td>
-            </tr>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Reporte Oficial</title>
+    <style>
+        body {
+            margin: 0;
+            color: #182230;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #ffffff;
         }
-    </tbody>
-</table>
 
-<h3>
-    Total: @Model.Sum(x => x.Votos)
-</h3>
+        .report-page {
+            padding: 28px 34px;
+        }
+
+        .report-header {
+            border-bottom: 5px solid #003b70;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+
+        .brand-row {
+            display: table;
+            width: 100%;
+        }
+
+        .brand-logo,
+        .brand-title,
+        .brand-meta {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .brand-logo {
+            width: 78px;
+        }
+
+        .logo-box {
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            background: #003b70;
+            color: #ffffff;
+            text-align: center;
+            line-height: 56px;
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .brand-title h1 {
+            margin: 0;
+            font-size: 22px;
+            color: #003b70;
+            letter-spacing: .02em;
+        }
+
+        .brand-title p,
+        .brand-meta p {
+            margin: 4px 0 0;
+            color: #667085;
+            font-size: 12px;
+        }
+
+        .brand-meta {
+            text-align: right;
+        }
+
+        .report-title {
+            margin: 20px 0 8px;
+            text-align: center;
+            font-size: 25px;
+            color: #101828;
+        }
+
+        .summary-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 22px;
+        }
+
+        .summary-card {
+            display: table-cell;
+            width: 33.3%;
+            padding: 10px;
+        }
+
+        .summary-card div {
+            border: 1px solid #d9e0ea;
+            border-radius: 6px;
+            padding: 14px;
+            background: #f8fafc;
+        }
+
+        .summary-card span {
+            display: block;
+            color: #667085;
+            font-size: 12px;
+        }
+
+        .summary-card strong {
+            display: block;
+            margin-top: 4px;
+            color: #003b70;
+            font-size: 20px;
+        }
+
+        .chart-section {
+            display: table;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        .chart-box,
+        .legend-box {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .chart-box {
+            width: 42%;
+            text-align: center;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .legend-box {
+            width: 58%;
+            padding-left: 16px;
+        }
+
+        .legend-item {
+            display: table;
+            width: 100%;
+            border-bottom: 1px solid #eef2f6;
+            padding: 7px 0;
+            font-size: 12px;
+        }
+
+        .legend-color,
+        .legend-name,
+        .legend-value {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .legend-color {
+            width: 24px;
+        }
+
+        .color-dot {
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+        }
+
+        .legend-value {
+            text-align: right;
+            font-weight: 700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        th {
+            background: #003b70;
+            color: #ffffff;
+            padding: 9px;
+            text-align: left;
+            border: 1px solid #003b70;
+        }
+
+        td {
+            padding: 8px;
+            border: 1px solid #d9e0ea;
+            vertical-align: middle;
+        }
+
+        tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        .candidate-img {
+            width: 38px;
+            height: 38px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid #d9e0ea;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .report-footer {
+            margin-top: 28px;
+            border-top: 1px solid #d9e0ea;
+            padding-top: 10px;
+            color: #667085;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-page">
+        <header class="report-header">
+            <div class="brand-row">
+                <div class="brand-logo">
+                    <div class="logo-box">SV</div>
+                </div>
+                <div class="brand-title">
+                    <h1>SV Sistema Votacion</h1>
+                    <p>Conteo electoral | MVC | Web API | gRPC</p>
+                </div>
+                <div class="brand-meta">
+                    <strong>Reporte oficial</strong>
+                    <p>Fecha: @DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")</p>
+                </div>
+            </div>
+        </header>
+
+        <h2 class="report-title">RESULTADOS GENERALES DE VOTACION</h2>
+
+        <section class="summary-grid">
+            <div class="summary-card">
+                <div>
+                    <span>Total de candidatos</span>
+                    <strong>@Model.Count</strong>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div>
+                    <span>Total de votos</span>
+                    <strong>@total</strong>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div>
+                    <span>Estado</span>
+                    <strong>Procesado</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="chart-section">
+            <div class="chart-box">
+                <div class="chart-title">Distribucion porcentual</div>
+                <svg width="240" height="240" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="50" fill="#eef2f6" />
+                    @if (total > 0)
+                    {
+                        for (var i = 0; i < Model.Count; i++)
+                        {
+                            var item = Model[i];
+                            var pct = item.Votos / (double)total;
+                            if (pct <= 0)
+                            {
+                                continue;
+                            }
+
+                            var endAngle = startAngle + Math.Min(pct * 360.0, 359.99);
+                            var color = colores[i % colores.Length];
+                            <path d="@DonutSegment(60, 60, 50, 32, startAngle, endAngle)"
+                                  fill="@color"
+                                  stroke="#ffffff"
+                                  stroke-width="0.8" />
+                            startAngle = endAngle;
+                        }
+                    }
+                    <circle cx="60" cy="60" r="32" fill="#ffffff" />
+                    <text x="60" y="56" text-anchor="middle" font-size="10" font-weight="700" fill="#003b70">TOTAL</text>
+                    <text x="60" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#101828">@total</text>
+                </svg>
+            </div>
+            <div class="legend-box">
+                <div class="chart-title">Leyenda de candidatos</div>
+                @for (var i = 0; i < Model.Count; i++)
+                {
+                    var item = Model[i];
+                    var porcentaje = total > 0 ? item.Votos * 100.0 / total : 0;
+                    var color = colores[i % colores.Length];
+                    <div class="legend-item">
+                        <div class="legend-color"><span class="color-dot" style="background:@color"></span></div>
+                        <div class="legend-name">@item.Nombre</div>
+                        <div class="legend-value">@porcentaje.ToString("0.00")% | @item.Votos votos</div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <h3>Listado de candidatos</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 70px;">Imagen</th>
+                    <th>Candidato</th>
+                    <th class="text-right">Votos</th>
+                    <th class="text-right">Porcentaje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var porcentaje = total > 0 ? item.Votos * 100.0 / total : 0;
+                    <tr>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(item.ImagenUrl))
+                            {
+                                <img src="@item.ImagenUrl" alt="@item.Nombre" class="candidate-img" />
+                            }
+                            else
+                            {
+                                <span>Sin imagen</span>
+                            }
+                        </td>
+                        <td>@item.Nombre</td>
+                        <td class="text-right">@item.Votos</td>
+                        <td class="text-right">@porcentaje.ToString("0.00")%</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <footer class="report-footer">
+            Generado por SV Sistema Votacion. Este documento consolida resultados del modulo de conteo electoral.
+        </footer>
+    </div>
+</body>
+</html>
+
+@functions {
+    private static string FormatNumber(double value)
+    {
+        return value.ToString("0.###", CultureInfo.InvariantCulture);
+    }
+
+    private static string PolarToCartesian(double centerX, double centerY, double radius, double angleInDegrees)
+    {
+        var angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+        var x = centerX + radius * Math.Cos(angleInRadians);
+        var y = centerY + radius * Math.Sin(angleInRadians);
+
+        return $"{FormatNumber(x)},{FormatNumber(y)}";
+    }
+
+    private static string DonutSegment(double centerX, double centerY, double outerRadius, double innerRadius, double startAngle, double endAngle)
+    {
+        var largeArcFlag = endAngle - startAngle > 180 ? "1" : "0";
+        var outerStart = PolarToCartesian(centerX, centerY, outerRadius, endAngle);
+        var outerEnd = PolarToCartesian(centerX, centerY, outerRadius, startAngle);
+        var innerStart = PolarToCartesian(centerX, centerY, innerRadius, startAngle);
+        var innerEnd = PolarToCartesian(centerX, centerY, innerRadius, endAngle);
+
+        return $"M {outerStart} A {FormatNumber(outerRadius)} {FormatNumber(outerRadius)} 0 {largeArcFlag} 0 {outerEnd} L {innerStart} A {FormatNumber(innerRadius)} {FormatNumber(innerRadius)} 0 {largeArcFlag} 1 {innerEnd} Z";
+    }
+}

@@ -1,0 +1,62 @@
+@model EF_POO_II.Models.Usuario
+
+@{
+    ViewData["Title"] = "Editar Usuario";
+}
+
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">Seguridad</span>
+        <h2>Editar Usuario</h2>
+    </div>
+    <a asp-controller="Usuarios" asp-action="Index" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="surface-panel">
+    <form asp-controller="Usuarios" asp-action="Edit" asp-route-id="@Model.Id" method="post">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" name="id" value="@Model.Id" />
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Usuario</label>
+                <input name="username" class="form-control" value="@Model.Username" required />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Rol</label>
+                <select name="rolId" class="form-control" required>
+                    @foreach (var rol in ViewBag.Roles)
+                    {
+                        <option value="@rol.Id" selected="@(rol.Id == Model.RolId)">
+                            @rol.Nombre
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Nueva contrasena</label>
+                <input name="password" type="password" class="form-control" autocomplete="new-password" />
+                <small class="text-muted">Dejar vacio para conservar la contrasena actual.</small>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn btn-primary">Guardar cambios</button>
+            <a asp-controller="Usuarios" asp-action="Index" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger mt-3">@ViewBag.Error</div>
+}
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
