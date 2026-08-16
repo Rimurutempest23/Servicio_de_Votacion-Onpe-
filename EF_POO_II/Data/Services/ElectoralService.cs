@@ -1,15 +1,19 @@
 using EF_POO_II.Data.Repositories;
+using EF_POO_II.Data.Hubs;
 using EF_POO_II.Models;
+using Microsoft.AspNetCore.SignalR;
 
 namespace EF_POO_II.Data.Services;
 
 public class ElectoralService : IElectoralService
 {
     private readonly IElectoralRepository _electoralRepository;
+    private readonly IHubContext<ResultadosHub> _resultadosHub;
 
-    public ElectoralService(IElectoralRepository electoralRepository)
+    public ElectoralService(IElectoralRepository electoralRepository, IHubContext<ResultadosHub> resultadosHub)
     {
         _electoralRepository = electoralRepository;
+        _resultadosHub = resultadosHub;
     }
 
     public Task<IReadOnlyList<Eleccion>> ListarEleccionesAsync()
@@ -81,6 +85,13 @@ public class ElectoralService : IElectoralService
         }
 
         var actaId = await _electoralRepository.ProcesarActaAsync(request, usuario);
+        await _resultadosHub.Clients.All.SendAsync("ResultadosActualizados", new
+        {
+            actaId,
+            mesaId = request.MesaElectoralId,
+            fecha = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+        });
+
         return (true, $"Acta electoral {actaId} procesada correctamente.", actaId);
     }
 }

@@ -1,0 +1,55 @@
+@model IReadOnlyList<ActaElectoral>
+@{
+    var usuario = ViewBag.Usuario as Usuario;
+    ViewData["Title"] = "Historial de Actas";
+}
+
+<section class="page-heading">
+    <div>
+        <span class="eyebrow">Usuarios</span>
+        <h1>Historial de actas</h1>
+        <p class="text-muted mb-0">Actas registradas por @(usuario?.Username ?? "usuario").</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-controller="Usuarios" asp-action="Index">Volver</a>
+</section>
+
+<div class="surface-panel">
+    @if (!Model.Any())
+    {
+        <div class="text-muted">Este usuario todavia no registra actas.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Acta</th>
+                        <th>Eleccion</th>
+                        <th>Mesa</th>
+                        <th>Distrito</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var acta in Model)
+                    {
+                        <tr>
+                            <td>@acta.Id</td>
+                            <td>@acta.Eleccion?.Nombre</td>
+                            <td>@acta.MesaElectoral?.CodigoMesa</td>
+                            <td>@acta.MesaElectoral?.Distrito</td>
+                            <td>@acta.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><span class="badge bg-success">@acta.Estado</span></td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Actas" asp-action="Detalle" asp-route-id="@acta.Id">Ver detalle</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

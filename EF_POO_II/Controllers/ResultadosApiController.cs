@@ -16,6 +16,29 @@ public class ResultadosApiController : ControllerBase
         _apiTokenService = apiTokenService;
     }
 
+    [HttpGet("oficiales")]
+    public async Task<IActionResult> Oficiales(string? filtro, int page = 1)
+    {
+        const int pageSize = 5;
+        var data = await _votacionService.ListarResultadosOficialesPaginadosAsync(filtro, page, pageSize);
+        var totalGeneral = (await _votacionService.ListarResultadosOficialesAsync()).Sum(c => c.Total);
+
+        return Ok(new
+        {
+            totalVotos = totalGeneral,
+            totalRegistros = data.TotalRegistros,
+            page = data.Page,
+            totalPages = data.TotalPages,
+            fechaConsulta = DateTime.Now,
+            items = data.Items.Select(c => new
+            {
+                candidato = c.Nombre,
+                imagenUrl = c.ImagenUrl,
+                votos = c.Total
+            })
+        });
+    }
+
     [HttpGet]
     public async Task<IActionResult> Get()
     {
@@ -28,7 +51,7 @@ public class ResultadosApiController : ControllerBase
             });
         }
 
-        var resultados = await _votacionService.ListarResultadosAsync();
+        var resultados = await _votacionService.ListarResultadosOficialesAsync();
 
         return Ok(new
         {
@@ -51,7 +74,7 @@ public class ResultadosApiController : ControllerBase
             });
         }
 
-        var resultados = await _votacionService.ListarResultadosAsync();
+        var resultados = await _votacionService.ListarResultadosOficialesAsync();
         var totalVotos = resultados.Sum(c => c.Total);
         var ganador = resultados.OrderByDescending(c => c.Total).FirstOrDefault();
 

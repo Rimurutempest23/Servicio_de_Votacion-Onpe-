@@ -3,6 +3,7 @@ using EF_POO_II.Data.Grpc;
 using EF_POO_II.Data.Hubs;
 using EF_POO_II.Data.Repositories;
 using EF_POO_II.Data.Services;
+using EF_POO_II.Grpc;
 using EF_POO_II.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -46,6 +47,10 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddGrpc();
+builder.Services.AddGrpcClient<ResultadosGrpc.ResultadosGrpcClient>(options =>
+{
+    options.Address = new Uri(builder.Configuration["Services:ResultadosGrpc"] ?? "http://localhost:5213");
+});
 builder.Services.AddSignalR();
 builder.Services.AddSession();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
@@ -81,6 +86,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGrpcService<ResultadosGrpcService>();
 app.MapHub<ChatHub>("/hubs/chat");
+app.MapHub<ResultadosHub>("/hubs/resultados");
 app.MapGet("/health", () => Results.Ok(new
 {
     status = "Healthy",

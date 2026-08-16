@@ -85,6 +85,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 
 <script>
     let chart;
@@ -93,7 +94,7 @@
     async function cargarDatos(page = 1) {
         paginaActual = page;
         const filtro = document.getElementById("filtroDashboard").value;
-        const url = `/Dashboard/ObtenerResultados?page=${page}&filtro=${encodeURIComponent(filtro)}`;
+        const url = `/api/resultados/oficiales?page=${page}&filtro=${encodeURIComponent(filtro)}`;
         const response = await fetch(url);
         const payload = await response.json();
         const data = payload.items;
@@ -188,6 +189,18 @@
         cargarDatos(1);
     });
 
-    setInterval(() => cargarDatos(paginaActual), 5000);
+    const resultadosConnection = new signalR.HubConnectionBuilder()
+        .withUrl("/hubs/resultados")
+        .withAutomaticReconnect()
+        .build();
+
+    resultadosConnection.on("ResultadosActualizados", function () {
+        cargarDatos(paginaActual);
+    });
+
+    resultadosConnection.start().catch(function () {
+        console.warn("No se pudo conectar al canal en vivo de resultados.");
+    });
+
     cargarDatos();
 </script>

@@ -31,8 +31,8 @@ public class DashboardController : Controller
     public async Task<IActionResult> ObtenerResultados(string? filtro, int page = 1)
     {
         const int pageSize = 5;
-        var data = await _votacionService.ListarResultadosPaginadosAsync(filtro, page, pageSize);
-        var totalGeneral = (await _votacionService.ListarResultadosAsync()).Sum(c => c.Total);
+        var data = await _votacionService.ListarResultadosOficialesPaginadosAsync(filtro, page, pageSize);
+        var totalGeneral = (await _votacionService.ListarResultadosOficialesAsync()).Sum(c => c.Total);
 
         return Json(new
         {
@@ -52,7 +52,7 @@ public class DashboardController : Controller
     [HttpGet("[action]")]
     public async Task<IActionResult> ExportarPDF()
     {
-        var data = await _votacionService.ListarResultadosAsync();
+        var data = await _votacionService.ListarResultadosOficialesAsync();
         var fileName = $"ReporteVotacion_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
         var rutaBase = Url.Action("ExportarPDF", "Dashboard", null, Request.Scheme) ?? "/Dashboard/ExportarPDF";
         var rutaDescarga = $"{rutaBase}?archivo={Uri.EscapeDataString(fileName)}";

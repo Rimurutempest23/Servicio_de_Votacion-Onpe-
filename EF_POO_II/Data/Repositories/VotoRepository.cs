@@ -34,6 +34,58 @@ public class VotoRepository : IVotoRepository
             .ToListAsync();
     }
 
+    public async Task<IReadOnlyList<CandidatoResultado>> ListarResultadosOficialesAsync()
+    {
+        return await _context.Candidatos
+            .Where(c => c.IsActivo)
+            .Select(c => new CandidatoResultado
+            {
+                Id = c.Id,
+                Nombre = c.Nombre,
+                ImagenUrl = c.ImagenUrl,
+                Total = _context.DetalleActas
+                    .Where(d => d.CandidatoId == c.Id)
+                    .Sum(d => (int?)d.Votos) ?? 0
+            })
+            .OrderByDescending(c => c.Total)
+            .ThenBy(c => c.Nombre)
+            .ToListAsync();
+    }
+
+    public async Task<PagedResult<CandidatoResultado>> ListarResultadosOficialesPaginadosAsync(string? filtro, int page, int pageSize)
+    {
+        page = Math.Max(page, 1);
+
+        var query = _context.Candidatos
+            .Where(c => c.IsActivo)
+            .Where(c => string.IsNullOrWhiteSpace(filtro) || c.Nombre.Contains(filtro))
+            .Select(c => new CandidatoResultado
+            {
+                Id = c.Id,
+                Nombre = c.Nombre,
+                ImagenUrl = c.ImagenUrl,
+                Total = _context.DetalleActas
+                    .Where(d => d.CandidatoId == c.Id)
+                    .Sum(d => (int?)d.Votos) ?? 0
+            })
+            .OrderByDescending(c => c.Total)
+            .ThenBy(c => c.Nombre);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<CandidatoResultado>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalRegistros = total,
+            Items = items
+        };
+    }
+
     public async Task<IReadOnlyList<CandidatoResultado>> ListarVotosPendientesAsync()
     {
         return await _context.Candidatos

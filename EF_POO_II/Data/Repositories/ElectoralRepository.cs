@@ -132,7 +132,30 @@ public class ElectoralRepository : IElectoralRepository
             cmd.Parameters.Add("@DetalleJson", SqlDbType.NVarChar).Value = JsonSerializer.Serialize(request.Detalles);
 
             var result = await cmd.ExecuteScalarAsync();
-            return Convert.ToInt32(result);
+            var actaId = Convert.ToInt32(result);
+
+            await using var actualizarMesa = new SqlCommand(
+                "UPDATE MesasElectorales SET Estado = 'Procesada' WHERE Id = @MesaElectoralId",
+                connection);
+            actualizarMesa.Parameters.Add("@MesaElectoralId", SqlDbType.Int).Value = request.MesaElectoralId;
+            await actualizarMesa.ExecuteNonQueryAsync();
+
+            await using var cerrarAsignacion = new SqlCommand(
+                @"UPDATE a
+                  SET IsActiva = 0,
+                      FechaCierre = COALESCE(FechaCierre, GETDATE()),
+                      Observacion = COALESCE(Observacion, 'Cerrada por procesamiento de acta')
+                  FROM OperadorMesaAsignaciones a
+                  INNER JOIN Usuarios u ON u.Id = a.UsuarioId
+                  WHERE a.MesaElectoralId = @MesaElectoralId
+                    AND a.IsActiva = 1
+                    AND u.Username = @UsuarioRegistro",
+                connection);
+            cerrarAsignacion.Parameters.Add("@MesaElectoralId", SqlDbType.Int).Value = request.MesaElectoralId;
+            cerrarAsignacion.Parameters.Add("@UsuarioRegistro", SqlDbType.VarChar, 50).Value = usuario;
+            await cerrarAsignacion.ExecuteNonQueryAsync();
+
+            return actaId;
         }
         finally
         {

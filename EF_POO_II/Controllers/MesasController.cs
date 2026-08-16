@@ -20,6 +20,8 @@ public class MesasController : Controller
     [HttpGet("[action]")]
     public async Task<IActionResult> Index()
     {
+        await SincronizarMesasProcesadasAsync();
+
         ViewBag.Operadores = await _context.Usuarios
             .Include(u => u.Rol)
             .Where(u => u.Rol.Nombre == "Operador" && u.IsActivo)
@@ -28,6 +30,7 @@ public class MesasController : Controller
 
         var mesas = await _context.MesasElectorales
             .Include(m => m.Usuario)
+            .Include(m => m.Actas)
             .OrderBy(m => m.Distrito)
             .ThenBy(m => m.CodigoMesa)
             .ToListAsync();
@@ -37,26 +40,28 @@ public class MesasController : Controller
 
     [HttpPost("[action]")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(string codigoMesa, string localVotacion, string distrito, int? usuarioId)
+    public async Task<IActionResult> Create(string localVotacion, string distrito, int? usuarioId)
     {
-        if (string.IsNullOrWhiteSpace(codigoMesa) || string.IsNullOrWhiteSpace(localVotacion) || string.IsNullOrWhiteSpace(distrito))
+        if (string.IsNullOrWhiteSpace(localVotacion) || string.IsNullOrWhiteSpace(distrito))
         {
             TempData["Error"] = "Complete los datos de la mesa.";
             TempData["Scope"] = "Mesas";
             return RedirectToAction(nameof(Index));
         }
 
-        _context.MesasElectorales.Add(new MesaElectoral
+        var codigoMesa = await GenerarCodigoMesaAsync();
+        var mesa = new MesaElectoral
         {
-            CodigoMesa = codigoMesa.Trim(),
+            CodigoMesa = codigoMesa,
             LocalVotacion = localVotacion.Trim(),
             Distrito = distrito.Trim(),
             Estado = "Pendiente",
             UsuarioId = usuarioId
-        });
+        };
 
+        _context.MesasElectorales.Add(mesa);
         await _context.SaveChangesAsync();
-        var mesa = await _context.MesasElectorales.FirstAsync(m => m.CodigoMesa == codigoMesa.Trim());
+
         if (usuarioId.HasValue)
         {
             _context.OperadorMesaAsignaciones.Add(new OperadorMesaAsignacion
@@ -70,7 +75,7 @@ public class MesasController : Controller
             await _context.SaveChangesAsync();
         }
 
-        TempData["Success"] = "Mesa electoral creada.";
+        TempData["Success"] = $"Mesa electoral {codigoMesa} creada.";
         TempData["Scope"] = "Mesas";
         return RedirectToAction(nameof(Index));
     }
@@ -81,6 +86,22 @@ public class MesasController : Controller
     {
         var mesa = await _context.MesasElectorales.FindAsync(id);
         if (mesa == null) return NotFound();
+
+        var tieneActaProcesada = await _context.ActasElectorales
+            .AnyAsync(a => a.MesaElectoralId == id && a.Estado == "Procesada");
+
+        if (mesa.Estado == "Procesada" || tieneActaProcesada)
+        {
+            if (mesa.Estado != "Procesada")
+            {
+                mesa.Estado = "Procesada";
+                await _context.SaveChangesAsync();
+            }
+
+            TempData["Error"] = "Una mesa procesada no puede reasignarse.";
+            TempData["Scope"] = "Mesas";
+            return RedirectToAction(nameof(Index));
+        }
 
         var asignacionesActivas = await _context.OperadorMesaAsignaciones
             .Where(a => a.MesaElectoralId == id && a.IsActiva)
@@ -125,5 +146,35 @@ public class MesasController : Controller
         TempData["Success"] = "Mesa marcada como pendiente.";
         TempData["Scope"] = "Mesas";
         return RedirectToAction(nameof(Index));
+    }
+
+    private async Task<string> GenerarCodigoMesaAsync()
+    {
+        var numero = await _context.MesasElectorales.CountAsync() + 1;
+        string codigo;
+
+        do
+        {
+            codigo = $"MESA-{numero:000}";
+            numero++;
+        }
+        while (await _context.MesasElectorales.AnyAsync(m => m.CodigoMesa == codigo));
+
+        return codigo;
+    }
+
+    private async Task SincronizarMesasProcesadasAsync()
+    {
+        await _context.Database.ExecuteSqlRawAsync(
+            @"UPDATE m
+              SET Estado = 'Procesada'
+              FROM MesasElectorales m
+              WHERE m.Estado <> 'Procesada'
+                AND EXISTS (
+                    SELECT 1
+                    FROM ActasElectorales a
+                    WHERE a.MesaElectoralId = m.Id
+                      AND a.Estado = 'Procesada'
+                );");
     }
 }

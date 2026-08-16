@@ -17,21 +17,29 @@ public class VotacionService : IVotacionService
         return ListarResultadosInternoAsync();
     }
 
+    public async Task<IReadOnlyList<CandidatoResultadoDto>> ListarResultadosOficialesAsync()
+    {
+        var resultados = await _votoRepository.ListarResultadosOficialesAsync();
+        return MapearResultados(resultados);
+    }
+
+    public async Task<PagedResult<CandidatoResultadoDto>> ListarResultadosOficialesPaginadosAsync(string? filtro, int page, int pageSize)
+    {
+        var resultados = await _votoRepository.ListarResultadosOficialesPaginadosAsync(filtro, page, pageSize);
+
+        return new PagedResult<CandidatoResultadoDto>
+        {
+            Page = resultados.Page,
+            PageSize = resultados.PageSize,
+            TotalRegistros = resultados.TotalRegistros,
+            Items = MapearResultados(resultados.Items).ToList()
+        };
+    }
+
     public async Task<IReadOnlyList<CandidatoResultadoDto>> ListarVotosPendientesAsync()
     {
         var pendientes = await _votoRepository.ListarVotosPendientesAsync();
-        var totalVotos = pendientes.Sum(c => c.Total);
-
-        return pendientes
-            .Select(c => new CandidatoResultadoDto
-            {
-                Id = c.Id,
-                Nombre = c.Nombre,
-                ImagenUrl = c.ImagenUrl,
-                Total = c.Total,
-                Porcentaje = totalVotos > 0 ? Math.Round(c.Total * 100.0 / totalVotos, 2) : 0
-            })
-            .ToList();
+        return MapearResultados(pendientes);
     }
 
     public async Task<PagedResult<CandidatoResultadoDto>> ListarResultadosPaginadosAsync(string? filtro, int page, int pageSize)
@@ -59,6 +67,11 @@ public class VotacionService : IVotacionService
     {
         var resultados = await _votoRepository.ListarResultadosAsync();
 
+        return MapearResultados(resultados);
+    }
+
+    private static IReadOnlyList<CandidatoResultadoDto> MapearResultados(IReadOnlyList<CandidatoResultado> resultados)
+    {
         var totalVotos = resultados.Sum(c => c.Total);
 
         return resultados

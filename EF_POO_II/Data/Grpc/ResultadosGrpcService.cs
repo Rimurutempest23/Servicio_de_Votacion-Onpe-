@@ -17,7 +17,7 @@ public class ResultadosGrpcService : ResultadosGrpc.ResultadosGrpcBase
 
     public override async Task<ResultadosReply> ObtenerResultados(ResultadosRequest request, ServerCallContext context)
     {
-        var resultados = await _votacionService.ListarResultadosAsync();
+        var resultados = await _votacionService.ListarResultadosOficialesAsync();
 
         var reply = new ResultadosReply
         {
@@ -91,5 +91,60 @@ public class ResultadosGrpcService : ResultadosGrpc.ResultadosGrpcBase
         }));
 
         return reply;
+    }
+
+    public override async Task<VerificarActaReply> VerificarActa(VerificarActaRequest request, ServerCallContext context)
+    {
+        if (request.EleccionId <= 0 || request.MesaElectoralId <= 0 || string.IsNullOrWhiteSpace(request.Usuario))
+        {
+            return new VerificarActaReply
+            {
+                PuedeProcesar = false,
+                Mensaje = "Debe seleccionar una eleccion, una mesa asignada y un usuario operador.",
+                VotosPendientes = 0
+            };
+        }
+
+        var elecciones = await _electoralService.ListarEleccionesAsync();
+        if (!elecciones.Any(e => e.Id == request.EleccionId && e.Estado == "Abierta"))
+        {
+            return new VerificarActaReply
+            {
+                PuedeProcesar = false,
+                Mensaje = "La eleccion seleccionada no esta abierta.",
+                VotosPendientes = 0
+            };
+        }
+
+        var mesas = await _electoralService.ListarMesasParaUsuarioAsync(request.Usuario, esAdministrador: false);
+        if (!mesas.Any(m => m.Id == request.MesaElectoralId))
+        {
+            return new VerificarActaReply
+            {
+                PuedeProcesar = false,
+                Mensaje = "El operador no tiene una asignacion activa para esta mesa.",
+                VotosPendientes = 0
+            };
+        }
+
+        var pendientes = await _votacionService.ListarVotosPendientesAsync();
+        var totalPendiente = pendientes.Sum(p => p.Total);
+
+        if (totalPendiente <= 0)
+        {
+            return new VerificarActaReply
+            {
+                PuedeProcesar = false,
+                Mensaje = "No existen votos pendientes para formalizar en un acta.",
+                VotosPendientes = 0
+            };
+        }
+
+        return new VerificarActaReply
+        {
+            PuedeProcesar = true,
+            Mensaje = "Validacion gRPC correcta: el acta puede procesarse.",
+            VotosPendientes = totalPendiente
+        };
     }
 }

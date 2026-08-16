@@ -17,7 +17,7 @@
     <div class="row g-3">
         <div class="col-md-2">
             <label class="form-label">Codigo</label>
-            <input name="codigoMesa" class="form-control" required />
+            <input class="form-control" value="Autogenerado" disabled />
         </div>
         <div class="col-md-3">
             <label class="form-label">Local</label>
@@ -59,29 +59,50 @@
             <tbody>
                 @foreach (var item in Model)
                 {
+                    var procesada = item.Estado == "Procesada" || item.Actas.Any(a => a.Estado == "Procesada");
                     <tr>
                         <td>@item.CodigoMesa</td>
                         <td>@item.LocalVotacion</td>
                         <td>@item.Distrito</td>
-                        <td><span class="badge bg-secondary">@item.Estado</span></td>
                         <td>
-                            <form asp-action="Asignar" asp-route-id="@item.Id" method="post" class="d-flex gap-2">
-                                @Html.AntiForgeryToken()
-                                <select name="usuarioId" class="form-select form-select-sm">
-                                    <option value="">Sin asignar</option>
-                                    @foreach (var operador in operadores)
-                                    {
-                                        <option value="@operador.Id" selected="@(item.UsuarioId == operador.Id)">@operador.Username</option>
-                                    }
-                                </select>
-                                <button class="btn btn-sm btn-outline-primary">Asignar</button>
-                            </form>
+                            @if (procesada)
+                            {
+                                <span class="badge bg-success">Procesada</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Pendiente</span>
+                            }
+                        </td>
+                        <td>
+                            @if (procesada)
+                            {
+                                <span class="text-muted">Cerrada por acta</span>
+                            }
+                            else
+                            {
+                                <form asp-action="Asignar" asp-route-id="@item.Id" method="post" class="d-flex gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <select name="usuarioId" class="form-select form-select-sm">
+                                        <option value="">Sin asignar</option>
+                                        @foreach (var operador in operadores)
+                                        {
+                                            <option value="@operador.Id" selected="@(item.UsuarioId == operador.Id)">@operador.Username</option>
+                                        }
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary">Asignar</button>
+                                </form>
+                            }
                         </td>
                         <td class="text-end">
-                            <form asp-action="Reiniciar" asp-route-id="@item.Id" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button class="btn btn-sm btn-outline-warning">Pendiente</button>
-                            </form>
+                            @if (procesada)
+                            {
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Procesada</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Pendiente</span>
+                            }
                         </td>
                     </tr>
                 }

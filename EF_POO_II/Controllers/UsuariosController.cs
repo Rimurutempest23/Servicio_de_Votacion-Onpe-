@@ -85,6 +85,24 @@ public class UsuariosController : Controller
         return View(usuario);
     }
 
+    [HttpGet("[action]/{id:int}")]
+    public async Task<IActionResult> HistorialActas(int id)
+    {
+        var usuario = await _repo.GetByIdAsync(id);
+        if (usuario == null) return NotFound();
+
+        var actas = await _context.ActasElectorales
+            .AsNoTracking()
+            .Include(a => a.Eleccion)
+            .Include(a => a.MesaElectoral)
+            .Where(a => a.UsuarioRegistro == usuario.Username)
+            .OrderByDescending(a => a.FechaRegistro)
+            .ToListAsync();
+
+        ViewBag.Usuario = usuario;
+        return View(actas);
+    }
+
     [HttpPost("[action]")]
     [HttpPost("[action]/{id}")]
     [ValidateAntiForgeryToken]

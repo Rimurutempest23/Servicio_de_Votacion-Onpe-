@@ -20,17 +20,27 @@ public class VotosController : Controller
     public async Task<IActionResult> Index(string? filtro, int page = 1)
     {
         const int pageSize = 5;
-        var data = await _votacionService.ListarResultadosAsync();
-        var resultado = await _votacionService.ListarResultadosPaginadosAsync(filtro, page, pageSize);
+        var data = await _votacionService.ListarVotosPendientesAsync();
+        var filtrados = data
+            .Where(c => string.IsNullOrWhiteSpace(filtro) || c.Nombre.Contains(filtro, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(c => c.Total)
+            .ThenBy(c => c.Nombre)
+            .ToList();
+        var totalPages = (int)Math.Ceiling(filtrados.Count / (double)pageSize);
+        page = Math.Clamp(page, 1, Math.Max(totalPages, 1));
+        var items = filtrados
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
 
         ViewBag.Candidatos = data.OrderBy(c => c.Nombre).ToList();
-        ViewBag.Page = resultado.Page;
-        ViewBag.TotalPages = resultado.TotalPages;
-        ViewBag.TotalRegistros = resultado.TotalRegistros;
+        ViewBag.Page = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalRegistros = filtrados.Count;
         ViewBag.Filtro = filtro;
         ViewBag.TotalVotosGeneral = data.Sum(c => c.Total);
 
-        return View(resultado.Items);
+        return View(items);
     }
 
     [HttpPost("[action]")]

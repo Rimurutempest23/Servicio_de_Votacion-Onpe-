@@ -8,6 +8,10 @@ public interface IVotoRepository
 
     Task<IReadOnlyList<CandidatoResultado>> ListarResultadosAsync();
 
+    Task<IReadOnlyList<CandidatoResultado>> ListarResultadosOficialesAsync();
+
+    Task<PagedResult<CandidatoResultado>> ListarResultadosOficialesPaginadosAsync(string? filtro, int page, int pageSize);
+
     Task<IReadOnlyList<CandidatoResultado>> ListarVotosPendientesAsync();
 
     Task<PagedResult<CandidatoResultado>> ListarResultadosPaginadosAsync(string? filtro, int page, int pageSize);

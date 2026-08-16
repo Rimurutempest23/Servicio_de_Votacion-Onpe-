@@ -41,6 +41,9 @@
                 <td>@u.Username</td>
                 <td>@u.Rol.Nombre</td>
                 <td class="text-end">
+                    <a asp-controller="Usuarios" asp-action="HistorialActas" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">
+                        Historial
+                    </a>
                     <a asp-controller="Usuarios" asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-warning">
                         Editar
                     </a>
