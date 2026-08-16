@@ -31,6 +31,7 @@ namespace EF_POO_II.Data.Repositories
                     SELECT u.Id, u.Username, u.PasswordHash, u.RolId, r.Nombre AS RolNombre
                     FROM Usuarios u
                     INNER JOIN Roles r ON r.Id = u.RolId
+                    WHERE u.IsActivo = 1
                     ORDER BY u.Username", connection);
 
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -111,7 +112,7 @@ namespace EF_POO_II.Data.Repositories
                     SELECT u.Id, u.Username, u.PasswordHash, u.RolId, r.Nombre AS RolNombre
                     FROM Usuarios u
                     INNER JOIN Roles r ON r.Id = u.RolId
-                    WHERE u.Username = @username", connection);
+                    WHERE u.Username = @username AND u.IsActivo = 1", connection);
 
                 cmd.Parameters.Add("@username", SqlDbType.VarChar, 50).Value = username;
 
@@ -148,7 +149,7 @@ namespace EF_POO_II.Data.Repositories
                     SELECT u.Id, u.Username, u.PasswordHash, u.RolId, r.Nombre AS RolNombre
                     FROM Usuarios u
                     INNER JOIN Roles r ON r.Id = u.RolId
-                    WHERE u.Id = @id", connection);
+                    WHERE u.Id = @id AND u.IsActivo = 1", connection);
 
                 cmd.Parameters.Add("@id", SqlDbType.Int).Value = id;
 

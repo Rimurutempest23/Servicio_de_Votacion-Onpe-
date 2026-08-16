@@ -1,0 +1,91 @@
+@model IReadOnlyList<MesaElectoral>
+@{
+    ViewData["Title"] = "Mesas Electorales";
+    var operadores = ViewBag.Operadores as IReadOnlyList<Usuario> ?? Array.Empty<Usuario>();
+}
+
+<section class="page-heading">
+    <div>
+        <span class="eyebrow">Operacion electoral</span>
+        <h1>Mesas electorales</h1>
+        <p class="text-muted mb-0">El administrador crea mesas y asigna cada una a un operador.</p>
+    </div>
+</section>
+
+<form asp-action="Create" method="post" class="surface-panel mb-3">
+    @Html.AntiForgeryToken()
+    <div class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">Codigo</label>
+            <input name="codigoMesa" class="form-control" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Local</label>
+            <input name="localVotacion" class="form-control" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Distrito</label>
+            <input name="distrito" class="form-control" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Operador</label>
+            <select name="usuarioId" class="form-select">
+                <option value="">Sin asignar</option>
+                @foreach (var operador in operadores)
+                {
+                    <option value="@operador.Id">@operador.Username</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <button class="btn btn-primary w-100" type="submit">Crear</button>
+        </div>
+    </div>
+</form>
+
+<div class="surface-panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Codigo</th>
+                    <th>Local</th>
+                    <th>Distrito</th>
+                    <th>Estado</th>
+                    <th>Operador</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.CodigoMesa</td>
+                        <td>@item.LocalVotacion</td>
+                        <td>@item.Distrito</td>
+                        <td><span class="badge bg-secondary">@item.Estado</span></td>
+                        <td>
+                            <form asp-action="Asignar" asp-route-id="@item.Id" method="post" class="d-flex gap-2">
+                                @Html.AntiForgeryToken()
+                                <select name="usuarioId" class="form-select form-select-sm">
+                                    <option value="">Sin asignar</option>
+                                    @foreach (var operador in operadores)
+                                    {
+                                        <option value="@operador.Id" selected="@(item.UsuarioId == operador.Id)">@operador.Username</option>
+                                    }
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary">Asignar</button>
+                            </form>
+                        </td>
+                        <td class="text-end">
+                            <form asp-action="Reiniciar" asp-route-id="@item.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-warning">Pendiente</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

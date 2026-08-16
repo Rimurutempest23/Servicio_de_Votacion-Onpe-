@@ -16,7 +16,7 @@ public class CandidatoRepository : ICandidatoRepository
 
     public async Task<List<Candidato>> GetAllAsync()
     {
-        return await _context.Candidatos.OrderBy(c => c.Nombre).ToListAsync();
+        return await _context.Candidatos.Where(c => c.IsActivo).OrderBy(c => c.Nombre).ToListAsync();
     }
 
     public async Task<PagedResult<Candidato>> BuscarPaginadoAsync(string? filtro, int page, int pageSize)
@@ -72,7 +72,7 @@ public class CandidatoRepository : ICandidatoRepository
 
     public async Task<Candidato?> GetByIdAsync(int id)
     {
-        return await _context.Candidatos.FindAsync(id);
+        return await _context.Candidatos.FirstOrDefaultAsync(c => c.Id == id && c.IsActivo);
     }
 
     public async Task AddAsync(Candidato candidato)

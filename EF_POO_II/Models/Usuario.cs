@@ -26,6 +26,12 @@ public partial class Usuario
     [Column("RolId")]
     public int RolId { get; set; }
 
+    public bool IsActivo { get; set; } = true;
+
     [ForeignKey("RolId")]
     public virtual Role Rol { get; set; } = null!;
+
+    public virtual ICollection<MesaElectoral> MesasAsignadas { get; set; } = new List<MesaElectoral>();
+
+    public virtual ICollection<OperadorMesaAsignacion> AsignacionesMesa { get; set; } = new List<OperadorMesaAsignacion>();
 }

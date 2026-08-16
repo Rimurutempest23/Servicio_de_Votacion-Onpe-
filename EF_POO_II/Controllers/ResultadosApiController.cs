@@ -38,4 +38,29 @@ public class ResultadosApiController : ControllerBase
             candidatos = resultados
         });
     }
+
+    [HttpGet("resumen")]
+    public async Task<IActionResult> Resumen()
+    {
+        var token = _apiTokenService.ValidateToken(Request.Headers.Authorization.ToString());
+        if (!token.IsValid)
+        {
+            return Unauthorized(new
+            {
+                mensaje = "Token invalido o expirado. Inicie sesion en /api/auth/login."
+            });
+        }
+
+        var resultados = await _votacionService.ListarResultadosAsync();
+        var totalVotos = resultados.Sum(c => c.Total);
+        var ganador = resultados.OrderByDescending(c => c.Total).FirstOrDefault();
+
+        return Ok(new
+        {
+            totalCandidatos = resultados.Count,
+            totalVotos,
+            ganador,
+            fechaConsulta = DateTime.Now
+        });
+    }
 }

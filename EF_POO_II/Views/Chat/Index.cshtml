@@ -1,0 +1,117 @@
+@{
+    ViewData["Title"] = "Chat SignalR";
+}
+
+<section class="page-heading">
+    <div>
+        <span class="eyebrow">SignalR</span>
+        <h1>Chat electoral en tiempo real</h1>
+        <p class="text-muted mb-0">Comunicacion interna para operadores y administradores conectados.</p>
+    </div>
+</section>
+
+<div class="chat-shell">
+    <section class="chat-panel">
+        <div class="chat-header">
+            <div>
+                <strong>Sala de coordinacion</strong>
+                <span id="estadoConexion">Conectando...</span>
+            </div>
+            <span class="chat-user">@User.Identity?.Name</span>
+        </div>
+
+        <div id="mensajes" class="chat-messages"></div>
+
+        <form id="chatForm" class="chat-form" data-no-loader="true">
+            <input id="mensaje" class="form-control" autocomplete="off" maxlength="240" placeholder="Escribe un mensaje..." />
+            <button class="btn btn-primary" type="submit">Enviar</button>
+        </form>
+    </section>
+
+    <aside class="surface-panel">
+        <span class="eyebrow">Flujo</span>
+        <h2 class="h5">Como funciona</h2>
+        <p class="text-muted mb-0">
+            El navegador se conecta al hub <strong>/hubs/chat</strong>. Cuando un usuario envia un mensaje,
+            el servidor lo retransmite a todos los clientes conectados sin recargar la pagina.
+        </p>
+    </aside>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        const mensajes = document.getElementById('mensajes');
+        const estadoConexion = document.getElementById('estadoConexion');
+        const form = document.getElementById('chatForm');
+        const input = document.getElementById('mensaje');
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl('/hubs/chat')
+            .withAutomaticReconnect()
+            .build();
+
+        function agregarMensaje(usuario, mensaje, hora) {
+            const item = document.createElement('div');
+            item.className = 'chat-message';
+
+            const meta = document.createElement('div');
+            const autor = document.createElement('strong');
+            const tiempo = document.createElement('small');
+            const texto = document.createElement('p');
+
+            autor.textContent = usuario;
+            tiempo.textContent = hora;
+            texto.textContent = mensaje;
+
+            meta.appendChild(autor);
+            meta.appendChild(tiempo);
+            item.appendChild(meta);
+            item.appendChild(texto);
+
+            mensajes.appendChild(item);
+            mensajes.scrollTop = mensajes.scrollHeight;
+        }
+
+        connection.on('CargarHistorial', function (historial) {
+            mensajes.innerHTML = '';
+            historial.forEach(x => agregarMensaje(x.usuario, x.mensaje, x.hora));
+        });
+
+        connection.on('RecibirMensaje', agregarMensaje);
+
+        connection.onreconnecting(() => {
+            estadoConexion.textContent = 'Reconectando...';
+        });
+
+        connection.onreconnected(() => {
+            estadoConexion.textContent = 'Conectado';
+        });
+
+        connection.onclose(() => {
+            estadoConexion.textContent = 'Desconectado';
+        });
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const texto = input.value.trim();
+
+            if (!texto) {
+                return;
+            }
+
+            await connection.invoke('EnviarMensaje', texto);
+            input.value = '';
+            input.focus();
+        });
+
+        connection.start()
+            .then(() => {
+                estadoConexion.textContent = 'Conectado';
+                input.focus();
+            })
+            .catch(() => {
+                estadoConexion.textContent = 'No conectado';
+            });
+    </script>
+}

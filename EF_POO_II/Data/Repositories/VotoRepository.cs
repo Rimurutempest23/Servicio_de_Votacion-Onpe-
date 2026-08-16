@@ -16,12 +16,13 @@ public class VotoRepository : IVotoRepository
 
     public Task<bool> ExisteCandidatoAsync(int candidatoId)
     {
-        return _context.Candidatos.AnyAsync(c => c.Id == candidatoId);
+        return _context.Candidatos.AnyAsync(c => c.Id == candidatoId && c.IsActivo);
     }
 
     public async Task<IReadOnlyList<CandidatoResultado>> ListarResultadosAsync()
     {
         return await _context.Candidatos
+            .Where(c => c.IsActivo)
             .OrderBy(c => c.Nombre)
             .Select(c => new CandidatoResultado
             {
@@ -29,6 +30,23 @@ public class VotoRepository : IVotoRepository
                 Nombre = c.Nombre,
                 ImagenUrl = c.ImagenUrl,
                 Total = c.TotalVotos
+            })
+            .ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<CandidatoResultado>> ListarVotosPendientesAsync()
+    {
+        return await _context.Candidatos
+            .Where(c => c.IsActivo)
+            .OrderBy(c => c.Nombre)
+            .Select(c => new CandidatoResultado
+            {
+                Id = c.Id,
+                Nombre = c.Nombre,
+                ImagenUrl = c.ImagenUrl,
+                Total = _context.Votos
+                    .Where(v => v.CandidatoId == c.Id && v.ActaElectoralId == null)
+                    .Sum(v => (int?)v.Cantidad) ?? 0
             })
             .ToListAsync();
     }

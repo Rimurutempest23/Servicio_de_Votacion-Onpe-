@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EF_POO_II.Controllers;
 
 [Route("[controller]")]
-[Authorize(Roles = "Operador,Administrador")]
+[Authorize(Roles = "Operador")]
 public class VotosController : Controller
 {
     private readonly IVotacionService _votacionService;

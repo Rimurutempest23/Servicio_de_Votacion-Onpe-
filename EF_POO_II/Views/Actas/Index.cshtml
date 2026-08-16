@@ -1,0 +1,140 @@
+@model RegistrarActaRequest
+@{
+    ViewData["Title"] = "Actas Electorales";
+    var elecciones = ViewBag.Elecciones as IReadOnlyList<Eleccion> ?? Array.Empty<Eleccion>();
+    var mesas = ViewBag.Mesas as IReadOnlyList<MesaElectoral> ?? Array.Empty<MesaElectoral>();
+    var candidatos = ViewBag.Candidatos as IReadOnlyList<CandidatoResultadoDto> ?? Array.Empty<CandidatoResultadoDto>();
+    var actas = ViewBag.Actas as IReadOnlyList<ActaResumenDto> ?? Array.Empty<ActaResumenDto>();
+    var esAdministrador = ViewBag.EsAdministrador as bool? ?? false;
+    var eleccionesDisponibles = elecciones.Where(e => e.Estado == "Abierta").ToList();
+}
+
+<section class="page-heading">
+    <div>
+        <span class="eyebrow">Flujo electoral</span>
+        <h1>Procesamiento de actas</h1>
+        <p class="text-muted mb-0">Registra una mesa, guarda el detalle por candidato y actualiza resultados mediante transaccion SQL.</p>
+    </div>
+</section>
+
+<div class="row g-3">
+    @if (!esAdministrador)
+    {
+    <div class="col-lg-5">
+        <form asp-action="Procesar" method="post" class="surface-panel">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label">Eleccion</label>
+                <select asp-for="EleccionId" class="form-select">
+                    <option value="">Seleccione</option>
+                    @foreach (var item in eleccionesDisponibles)
+                    {
+                        <option value="@item.Id">@item.Nombre (@item.Estado)</option>
+                    }
+                </select>
+                <span asp-validation-for="EleccionId" class="text-danger"></span>
+            </div>
+
+            @if (mesas.Count == 0)
+            {
+                <div class="alert alert-warning">
+                    No tienes una mesa electoral asignada. Solicita al administrador que te asigne una mesa desde el modulo Mesas.
+                </div>
+            }
+            else if (esAdministrador)
+            {
+                <div class="mb-3">
+                    <label class="form-label">Mesa electoral</label>
+                    <select asp-for="MesaElectoralId" class="form-select">
+                        <option value="">Seleccione</option>
+                        @foreach (var item in mesas)
+                        {
+                            <option value="@item.Id">@item.CodigoMesa - @item.Distrito (@item.Estado) - @(item.Usuario?.Username ?? "Sin operador")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="MesaElectoralId" class="text-danger"></span>
+                </div>
+            }
+            else
+            {
+                var mesaAsignada = mesas.First();
+                <input type="hidden" asp-for="MesaElectoralId" value="@mesaAsignada.Id" />
+                <div class="mb-3">
+                    <label class="form-label">Mesa asignada</label>
+                    <div class="assigned-mesa">
+                        <strong>@mesaAsignada.CodigoMesa</strong>
+                        <span>@mesaAsignada.LocalVotacion - @mesaAsignada.Distrito (@mesaAsignada.Estado)</span>
+                    </div>
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="Observaciones" class="form-label">Observaciones</label>
+                <textarea asp-for="Observaciones" class="form-control" rows="2" placeholder="Opcional"></textarea>
+            </div>
+
+            <h2 class="h5">Detalle por candidato</h2>
+            <p class="text-muted small mb-2">
+                Los campos se precargan solo con votos pendientes de formalizar. Los votos de actas ya procesadas no se cargan aqui.
+            </p>
+            <div class="acta-detail-list">
+                @for (var i = 0; i < candidatos.Count; i++)
+                {
+                    <div class="acta-detail-row">
+                        <input type="hidden" name="Detalles[@i].CandidatoId" value="@candidatos[i].Id" />
+                        <span>@candidatos[i].Nombre</span>
+                        <input class="form-control" type="number" min="0" name="Detalles[@i].Votos" value="@candidatos[i].Total" />
+                    </div>
+                }
+            </div>
+
+            <div class="action-bar">
+                <button class="btn btn-primary" type="submit" disabled="@(mesas.Count == 0)">Procesar acta</button>
+                <a class="btn btn-outline-secondary" asp-controller="Dashboard" asp-action="Index">Volver</a>
+            </div>
+        </form>
+    </div>
+    }
+
+    <div class="@(esAdministrador ? "col-12" : "col-lg-7")">
+        <div class="surface-panel">
+            <h2 class="h5">Registro de actas procesadas</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Acta</th>
+                            <th>Eleccion</th>
+                            <th>Mesa</th>
+                            <th>Distrito</th>
+                            <th>Votos</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in actas)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Eleccion</td>
+                                <td>@item.CodigoMesa</td>
+                                <td>@item.Distrito</td>
+                                <td>@item.TotalVotos</td>
+                                <td><span class="badge bg-success">@item.Estado</span></td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="Actas" asp-action="Detalle" asp-route-id="@item.Id">Ver detalle</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

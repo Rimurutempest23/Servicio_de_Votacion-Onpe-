@@ -41,6 +41,9 @@ namespace EF_POO_II.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(300)");
 
+                    b.Property<bool>("IsActivo")
+                        .HasColumnType("bit");
+
                     b.Property<int>("TotalVotos")
                         .HasColumnType("int");
 
@@ -48,6 +51,271 @@ namespace EF_POO_II.Migrations
                         .HasName("PK__Candidat__3214EC073219DE9E");
 
                     b.ToTable("Candidatos");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.ActaElectoral", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EleccionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime>("FechaRegistro")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<int>("MesaElectoralId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(250)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(250)");
+
+                    b.Property<string>("UsuarioRegistro")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_ActasElectorales");
+
+                    b.HasIndex("EleccionId");
+
+                    b.HasIndex("MesaElectoralId");
+
+                    b.ToTable("ActasElectorales");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.Auditoria", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTime>("Fecha")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("TablaAfectada")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<string>("Usuario")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_Auditorias");
+
+                    b.ToTable("Auditorias");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.DetalleActa", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ActaElectoralId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CandidatoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Votos")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK_DetalleActas");
+
+                    b.HasIndex("ActaElectoralId");
+
+                    b.HasIndex("CandidatoId");
+
+                    b.ToTable("DetalleActas");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.ChatMensaje", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Fecha")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(240)");
+
+                    b.Property<string>("Usuario")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_ChatMensajes");
+
+                    b.ToTable("ChatMensajes");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.Eleccion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime>("FechaFin")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(120)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_Elecciones");
+
+                    b.ToTable("Elecciones");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.MesaElectoral", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CodigoMesa")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("Distrito")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("LocalVotacion")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<int?>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK_MesasElectorales");
+
+                    b.HasIndex("CodigoMesa")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("MesasElectorales");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.OperadorMesaAsignacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("FechaAsignacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<DateTime?>("FechaCierre")
+                        .HasColumnType("datetime");
+
+                    b.Property<bool>("IsActiva")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MesaElectoralId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observacion")
+                        .HasMaxLength(120)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK_OperadorMesaAsignaciones");
+
+                    b.HasIndex("MesaElectoralId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("OperadorMesaAsignaciones");
                 });
 
             modelBuilder.Entity("EF_POO_II.Models.ReporteExportado", b =>
@@ -100,6 +368,68 @@ namespace EF_POO_II.Migrations
                     b.ToTable("Roles");
                 });
 
+            modelBuilder.Entity("EF_POO_II.Models.ActaElectoral", b =>
+                {
+                    b.HasOne("EF_POO_II.Models.Eleccion", "Eleccion")
+                        .WithMany("Actas")
+                        .HasForeignKey("EleccionId")
+                        .IsRequired();
+
+                    b.HasOne("EF_POO_II.Models.MesaElectoral", "MesaElectoral")
+                        .WithMany("Actas")
+                        .HasForeignKey("MesaElectoralId")
+                        .IsRequired();
+
+                    b.Navigation("Eleccion");
+
+                    b.Navigation("MesaElectoral");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.DetalleActa", b =>
+                {
+                    b.HasOne("EF_POO_II.Models.ActaElectoral", "ActaElectoral")
+                        .WithMany("Detalles")
+                        .HasForeignKey("ActaElectoralId")
+                        .IsRequired()
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("EF_POO_II.Models.Candidato", "Candidato")
+                        .WithMany()
+                        .HasForeignKey("CandidatoId")
+                        .IsRequired();
+
+                    b.Navigation("ActaElectoral");
+
+                    b.Navigation("Candidato");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.MesaElectoral", b =>
+                {
+                    b.HasOne("EF_POO_II.Models.Usuario", "Usuario")
+                        .WithMany("MesasAsignadas")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.OperadorMesaAsignacion", b =>
+                {
+                    b.HasOne("EF_POO_II.Models.MesaElectoral", "MesaElectoral")
+                        .WithMany()
+                        .HasForeignKey("MesaElectoralId")
+                        .IsRequired();
+
+                    b.HasOne("EF_POO_II.Models.Usuario", "Usuario")
+                        .WithMany("AsignacionesMesa")
+                        .HasForeignKey("UsuarioId")
+                        .IsRequired();
+
+                    b.Navigation("MesaElectoral");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("EF_POO_II.Models.Usuario", b =>
                 {
                     b.Property<int>("Id")
@@ -113,6 +443,9 @@ namespace EF_POO_II.Migrations
                         .HasMaxLength(255)
                         .IsUnicode(false)
                         .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("IsActivo")
+                        .HasColumnType("bit");
 
                     b.Property<int>("RolId")
                         .HasColumnType("int");
@@ -142,6 +475,9 @@ namespace EF_POO_II.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("ActaElectoralId")
+                        .HasColumnType("int");
+
                     b.Property<int>("CandidatoId")
                         .HasColumnType("int");
 
@@ -157,6 +493,8 @@ namespace EF_POO_II.Migrations
                         .HasName("PK__Votos__3214EC07B1DB355B");
 
                     b.HasIndex("CandidatoId");
+
+                    b.HasIndex("ActaElectoralId");
 
                     b.ToTable("Votos");
                 });
@@ -174,11 +512,18 @@ namespace EF_POO_II.Migrations
 
             modelBuilder.Entity("EF_POO_II.Models.Voto", b =>
                 {
+                    b.HasOne("EF_POO_II.Models.ActaElectoral", "ActaElectoral")
+                        .WithMany()
+                        .HasForeignKey("ActaElectoralId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("EF_POO_II.Models.Candidato", "Candidato")
                         .WithMany("Votos")
                         .HasForeignKey("CandidatoId")
                         .IsRequired()
                         .HasConstraintName("FK__Votos__Candidato__534D60F1");
+
+                    b.Navigation("ActaElectoral");
 
                     b.Navigation("Candidato");
                 });
@@ -188,9 +533,31 @@ namespace EF_POO_II.Migrations
                     b.Navigation("Votos");
                 });
 
+            modelBuilder.Entity("EF_POO_II.Models.ActaElectoral", b =>
+                {
+                    b.Navigation("Detalles");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.Eleccion", b =>
+                {
+                    b.Navigation("Actas");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.MesaElectoral", b =>
+                {
+                    b.Navigation("Actas");
+                });
+
             modelBuilder.Entity("EF_POO_II.Models.Role", b =>
                 {
                     b.Navigation("Usuarios");
+                });
+
+            modelBuilder.Entity("EF_POO_II.Models.Usuario", b =>
+                {
+                    b.Navigation("AsignacionesMesa");
+
+                    b.Navigation("MesasAsignadas");
                 });
 #pragma warning restore 612, 618
         }

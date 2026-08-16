@@ -6,6 +6,8 @@ public interface IVotacionService
 {
     Task<IReadOnlyList<CandidatoResultadoDto>> ListarResultadosAsync();
 
+    Task<IReadOnlyList<CandidatoResultadoDto>> ListarVotosPendientesAsync();
+
     Task<PagedResult<CandidatoResultadoDto>> ListarResultadosPaginadosAsync(string? filtro, int page, int pageSize);
 
     Task<string> RegistrarVotoAsync(int candidatoId, int cantidad);

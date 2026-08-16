@@ -6,9 +6,16 @@ package resultados;
 
 service ResultadosGrpc {
   rpc ObtenerResultados (ResultadosRequest) returns (ResultadosReply);
+  rpc ObtenerResultadosPorEleccion (ResultadosPorEleccionRequest) returns (ResultadosReply);
+  rpc ListarElecciones (EleccionesRequest) returns (EleccionesReply);
+  rpc ListarMesas (MesasRequest) returns (MesasReply);
 }
 
 message ResultadosRequest {
+}
+
+message ResultadosPorEleccionRequest {
+  int32 eleccion_id = 1;
 }
 
 message ResultadosReply {
@@ -25,4 +32,33 @@ message CandidatoGrpc {
   double porcentaje = 5;
 }
 
+message EleccionesRequest {
+}
+
+message EleccionesReply {
+  repeated EleccionGrpc elecciones = 1;
+}
+
+message EleccionGrpc {
+  int32 id = 1;
+  string nombre = 2;
+  string fecha_inicio = 3;
+  string fecha_fin = 4;
+  string estado = 5;
+}
+
+message MesasRequest {
+}
+
+message MesasReply {
+  repeated MesaGrpc mesas = 1;
+}
+
+message MesaGrpc {
+  int32 id = 1;
+  string codigo_mesa = 2;
+  string local_votacion = 3;
+  string distrito = 4;
+  string estado = 5;
+}
 

@@ -13,5 +13,9 @@ public partial class Voto
 
     public DateTime? Fecha { get; set; }
 
+    public int? ActaElectoralId { get; set; }
+
     public virtual Candidato Candidato { get; set; } = null!;
+
+    public virtual ActaElectoral? ActaElectoral { get; set; }
 }

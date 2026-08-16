@@ -17,6 +17,23 @@ public class VotacionService : IVotacionService
         return ListarResultadosInternoAsync();
     }
 
+    public async Task<IReadOnlyList<CandidatoResultadoDto>> ListarVotosPendientesAsync()
+    {
+        var pendientes = await _votoRepository.ListarVotosPendientesAsync();
+        var totalVotos = pendientes.Sum(c => c.Total);
+
+        return pendientes
+            .Select(c => new CandidatoResultadoDto
+            {
+                Id = c.Id,
+                Nombre = c.Nombre,
+                ImagenUrl = c.ImagenUrl,
+                Total = c.Total,
+                Porcentaje = totalVotos > 0 ? Math.Round(c.Total * 100.0 / totalVotos, 2) : 0
+            })
+            .ToList();
+    }
+
     public async Task<PagedResult<CandidatoResultadoDto>> ListarResultadosPaginadosAsync(string? filtro, int page, int pageSize)
     {
         var resultados = await _votoRepository.ListarResultadosPaginadosAsync(filtro, page, pageSize);

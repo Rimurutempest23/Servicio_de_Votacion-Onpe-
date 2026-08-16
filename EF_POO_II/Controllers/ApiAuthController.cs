@@ -33,7 +33,7 @@ public class ApiAuthController : ControllerBase
         }
 
         var usuario = await _usuarioRepository.GetByUsernameAsync(request.Username);
-        if (usuario == null || usuario.PasswordHash != PasswordHelper.HashPassword(request.Password))
+        if (usuario == null || !PasswordHelper.VerifyPassword(usuario.PasswordHash, request.Password))
         {
             return Unauthorized(new { mensaje = "Credenciales invalidas." });
         }

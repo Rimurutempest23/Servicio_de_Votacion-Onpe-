@@ -41,7 +41,7 @@ public class AccountController : Controller
 
         var usuario = await _context.Usuarios
             .Include(u => u.Rol)
-            .FirstOrDefaultAsync(u => u.Username == username);
+            .FirstOrDefaultAsync(u => u.Username == username && u.IsActivo);
 
         if (usuario == null)
         {
@@ -49,11 +49,16 @@ public class AccountController : Controller
             return View();
         }
 
-        var hash = PasswordHelper.HashPassword(password);
-        if (usuario.PasswordHash != hash)
+        if (!PasswordHelper.VerifyPassword(usuario.PasswordHash, password))
         {
             ViewBag.Error = "Contrasena incorrecta";
             return View();
+        }
+
+        if (PasswordHelper.NeedsRehash(usuario.PasswordHash, password))
+        {
+            usuario.PasswordHash = PasswordHelper.HashPassword(password);
+            await _context.SaveChangesAsync();
         }
 
         var sessionMinutes = _configuration.GetValue<int>("Security:SessionTimeoutMinutes", 20);

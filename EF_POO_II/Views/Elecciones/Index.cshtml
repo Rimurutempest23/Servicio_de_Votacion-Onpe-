@@ -1,0 +1,70 @@
+@model IReadOnlyList<Eleccion>
+@{
+    ViewData["Title"] = "Elecciones";
+}
+
+<section class="page-heading">
+    <div>
+        <span class="eyebrow">Configuracion electoral</span>
+        <h1>Elecciones</h1>
+        <p class="text-muted mb-0">El administrador crea y controla la apertura o cierre de una eleccion.</p>
+    </div>
+</section>
+
+<form asp-action="Create" method="post" class="surface-panel mb-3">
+    @Html.AntiForgeryToken()
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Nombre</label>
+            <input name="nombre" class="form-control" placeholder="Eleccion Municipal 2026" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Inicio</label>
+            <input name="fechaInicio" class="form-control" type="datetime-local" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Fin</label>
+            <input name="fechaFin" class="form-control" type="datetime-local" required />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-primary w-100" type="submit">Crear</button>
+        </div>
+    </div>
+</form>
+
+<div class="surface-panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Inicio</th>
+                    <th>Fin</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.Nombre</td>
+                        <td>@item.FechaInicio.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@item.FechaFin.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td><span class="badge bg-primary">@item.Estado</span></td>
+                        <td class="text-end">
+                            <form asp-action="Abrir" asp-route-id="@item.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-success">Abrir</button>
+                            </form>
+                            <form asp-action="Cerrar" asp-route-id="@item.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-danger">Cerrar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

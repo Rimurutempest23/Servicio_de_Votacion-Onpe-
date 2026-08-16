@@ -1,0 +1,102 @@
+@model ActaElectoral
+@{
+    ViewData["Title"] = "Detalle de Acta";
+    var detalles = Model.Detalles.OrderBy(d => d.Candidato?.Nombre).ToList();
+    var total = detalles.Sum(d => d.Votos);
+}
+
+<section class="page-heading">
+    <div>
+        <span class="eyebrow">Acta registrada</span>
+        <h1>Detalle de acta #@Model.Id</h1>
+        <p class="text-muted mb-0">Consulta el registro oficial procesado para la mesa electoral.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-controller="Actas" asp-action="Index">Volver</a>
+    </div>
+</section>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="surface-panel h-100">
+            <span class="eyebrow">Resumen</span>
+            <h2 class="h5 mt-2">@Model.Eleccion?.Nombre</h2>
+            <dl class="acta-summary-list">
+                <dt>Mesa</dt>
+                <dd>@Model.MesaElectoral?.CodigoMesa</dd>
+
+                <dt>Local</dt>
+                <dd>@Model.MesaElectoral?.LocalVotacion</dd>
+
+                <dt>Distrito</dt>
+                <dd>@Model.MesaElectoral?.Distrito</dd>
+
+                <dt>Operador</dt>
+                <dd>@Model.UsuarioRegistro</dd>
+
+                <dt>Fecha</dt>
+                <dd>@Model.FechaRegistro.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                <dt>Estado</dt>
+                <dd><span class="badge bg-success">@Model.Estado</span></dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="surface-panel">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="eyebrow">Detalle por candidato</span>
+                    <h2 class="h5 mt-2 mb-0">Votos registrados</h2>
+                </div>
+                <div class="metric-pill">
+                    <span>Total</span>
+                    <strong>@total</strong>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Candidato</th>
+                            <th class="text-end">Votos</th>
+                            <th class="text-end">Porcentaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in detalles)
+                        {
+                            var porcentaje = total > 0 ? item.Votos * 100.0 / total : 0;
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (!string.IsNullOrWhiteSpace(item.Candidato?.ImagenUrl))
+                                        {
+                                            <img src="@item.Candidato.ImagenUrl" alt="@item.Candidato.Nombre" class="candidate-thumb" />
+                                        }
+                                        else
+                                        {
+                                            <div class="candidate-thumb candidate-thumb-empty">SV</div>
+                                        }
+                                        <span>@item.Candidato?.Nombre</span>
+                                    </div>
+                                </td>
+                                <td class="text-end fw-semibold">@item.Votos</td>
+                                <td class="text-end">@porcentaje.ToString("0.00")%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Observaciones))
+            {
+                <div class="alert alert-light border mb-0">
+                    <strong>Observaciones:</strong> @Model.Observaciones
+                </div>
+            }
+        </div>
+    </div>
+</div>

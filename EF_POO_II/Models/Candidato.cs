@@ -25,5 +25,7 @@ public partial class Candidato
     [Range(0, int.MaxValue)]
     public int TotalVotos { get; set; }
 
+    public bool IsActivo { get; set; } = true;
+
     public virtual ICollection<Voto> Votos { get; set; } = new List<Voto>();
 }

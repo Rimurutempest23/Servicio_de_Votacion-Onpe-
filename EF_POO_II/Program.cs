@@ -1,5 +1,6 @@
 using EF_POO_II.Data;
 using EF_POO_II.Data.Grpc;
+using EF_POO_II.Data.Hubs;
 using EF_POO_II.Data.Repositories;
 using EF_POO_II.Data.Services;
 using EF_POO_II.Models;
@@ -11,18 +12,21 @@ using Rotativa.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options =>       
+if (builder.Environment.IsDevelopment())
 {
-    options.ListenLocalhost(5212, listenOptions =>
+    builder.WebHost.ConfigureKestrel(options =>
     {
-        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-    });
+        options.ListenLocalhost(5212, listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+        });
 
-    options.ListenLocalhost(5213, listenOptions =>
-    {
-        listenOptions.Protocols = HttpProtocols.Http2;
+        options.ListenLocalhost(5213, listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http2;
+        });
     });
-});
+}
 
 builder.Services.AddDbContext<SistemaVotacionContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("cnx")));
@@ -42,12 +46,15 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddGrpc();
+builder.Services.AddSignalR();
 builder.Services.AddSession();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IVotoRepository, VotoRepository>();
 builder.Services.AddScoped<IVotacionService, VotacionService>();
 builder.Services.AddScoped<ICandidatoRepository, CandidatoRepository>();
 builder.Services.AddScoped<IReporteExportadoRepository, ReporteExportadoRepository>();
+builder.Services.AddScoped<IElectoralRepository, ElectoralRepository>();
+builder.Services.AddScoped<IElectoralService, ElectoralService>();
 builder.Services.AddSingleton<IApiTokenService, ApiTokenService>();
 
 var app = builder.Build();
@@ -73,6 +80,14 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapGrpcService<ResultadosGrpcService>();
+app.MapHub<ChatHub>("/hubs/chat");
+app.MapGet("/health", () => Results.Ok(new
+{
+    status = "Healthy",
+    app = "Sistema Votacion",
+    environment = app.Environment.EnvironmentName,
+    checkedAt = DateTime.UtcNow
+})).AllowAnonymous();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
